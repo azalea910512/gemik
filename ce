@@ -186,80 +186,37 @@ cp /etc/openvpn/easy-rsa/keys/client.crt /etc/openvpn
 cp /etc/openvpn/easy-rsa/keys/client.key /etc/openvpn
 cp /etc/openvpn/tls-auth.key /etc/openvpn
 
-cat > /etc/openvpn/server.conf <<-EOF
-port 1194
-proto tcp
-dev tun
-
-ca /etc/openvpn/ca.crt
-cert /etc/openvpn/server.crt
-key /etc/openvpn/server.key
-dh /etc/openvpn/dh2048.pem
-tls-auth /etc/openvpn/tls-auth.key 0
-
-server 10.8.0.0 255.255.255.0
-ifconfig-pool-persist ipp.txt
-push "redirect-gateway bypass-dhcp"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
-keepalive 10 120
-user nobody
-group nogroup
-persist-key
-persist-tun
-auth SHA256
-cipher AES-128-CBC
-tls-server
-tls-version-min 1.2
-tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
-status vpn-status.log
-log /var/log/openvpn.log
-comp-lzo
-verb 3
-mute 20
-EOF
-
+# server settings
+cd /etc/openvpn/
+wget -O /etc/openvpn/server.conf "https://raw.githubusercontent.com/azalea910512/gemik/main/server.conf"
 systemctl start openvpn@server
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+iptables-save > /etc/iptables.up.rules
+wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/ara-rangers/vps/master/iptables"
+chmod +x /etc/network/if-up.d/iptables
+sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn@.service
+systemctl daemon-reload
+/etc/init.d/openvpn restart
+wget -qO /etc/openvpn/openvpn.bash "https://raw.githubusercontent.com/ara-rangers/vps/master/openvpn.bash"
+chmod +x /etc/openvpn/openvpn.bash
 
-cat > /etc/openvpn/client.ovpn <<-EOF
-client
-dev tun
-proto tcp-client
-remote $ipaddr 1194
-resolv-retry infinite
-nobind
-user nobody
-group nogroup
-persist-key
-persist-tun
-auth SHA256
-auth-nocache
-ns-cert-type server
-cipher AES-128-CBC
-tls-client
-tls-version-min 1.2
-tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
-http-proxy-retry
-http-proxy [squid] [port]
-mute-replay-warnings
-auth-user-pass
-comp-lzo
-verb 3
-mute 20
-EOF
-
-echo '' >> /etc/openvpn/client.ovpn
+# openvpn config
+wget -O /etc/openvpn/client.ovpn "https://raw.githubusercontent.com/azalea910512/gemik/main/client.conf"
+sed -i $MYIP2 /etc/openvpn/client.ovpn;
 echo '<ca>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/easy-rsa/keys/ca.crt >> /etc/openvpn/client.ovpn
+cat /etc/openvpn/ca.crt >> /etc/openvpn/client.ovpn
 echo '</ca>' >> /etc/openvpn/client.ovpn
 echo '<cert>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/easy-rsa/keys/client.crt >> /etc/openvpn/client.ovpn
+cat /etc/openvpn/client.crt >> /etc/openvpn/client.ovpn
 echo '</cert>' >> /etc/openvpn/client.ovpn
 echo '<key>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/easy-rsa/keys/client.key >> /etc/openvpn/client.ovpn
+cat /etc/openvpn/client.key >> /etc/openvpn/client.ovpn
 echo '</key>' >> /etc/openvpn/client.ovpn
 echo '<tls-auth>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/easy-rsa/keys/tls-auth.key >> /etc/openvpn/client.ovpn
+cat /etc/openvpn/tls-auth.key >> /etc/openvpn/client.ovpn
 echo '</tls-auth>' >> /etc/openvpn/client.ovpn
 cp client.ovpn /home/vps/public_html/
 echo "DONE"
