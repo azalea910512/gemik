@@ -125,22 +125,51 @@ echo
 sleep 3
 cd
 
-# install webserver
-apt-get -y install nginx libexpat1-dev libxml-parser-perl > /dev/null 2>&1
+echo -n "Installing nginx... "
+apt-get install sudo -y > /dev/null 2>&1
+usermod -aG sudo root
 
-# install essential package
-apt-get -y install nano iptables-persistent dnsutils screen whois ngrep unzip unrar > /dev/null 2>&1
+sudo apt -y install ca-certificates apt-transport-https > /dev/null 2>&1
+wget -q https://packages.sury.org/php/apt.gpg -O- | sudo apt-key add -
+echo "deb https://packages.sury.org/php/ stretch main" | sudo tee /etc/apt/sources.list.d/php.list
+
+sudo apt update -y > /dev/null 2>&1
+sudo apt install php5.6 -y > /dev/null 2>&1
+sudo apt install php5.6-mcrypt php5.6-mysql php5.6-fpm php5.6-cli php5.6-common php5.6-curl php5.6-mbstring php5.6-mysqlnd php5.6-xml -y > /dev/null 2>&1
 
 # install webserver
 cd
+sudo apt-get -y install nginx > /dev/null 2>&1
 rm /etc/nginx/sites-enabled/default
 rm /etc/nginx/sites-available/default
-wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/ara-rangers/vps/master/nginx.conf"
+wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/idtunnel/sshtunnel/master/debian9/nginx-default.conf"
 mkdir -p /home/vps/public_html
-echo "<pre>SETUP BY ARA PM +601126996292</pre>" > /home/vps/public_html/index.html
-wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/ara-rangers/vps/master/vps.conf"
-echo "[ DONE ]"
+echo "<?php phpinfo() ?>" > /home/vps/public_html/info.php
+wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/idtunnel/sshtunnel/master/debian9/vhost-nginx.conf"
 /etc/init.d/nginx restart
+
+# instal nginx php5.6 
+apt-get -y install nginx php5.6-fpm > /dev/null 2>&1
+apt-get -y install nginx php5.6-cli > /dev/null 2>&1
+apt-get -y install nginx php5.6-mysql > /dev/null 2>&1
+apt-get -y install nginx php5.6-mcrypt > /dev/null 2>&1
+sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/5.6/cli/php.ini
+
+# cari config php fpm dengan perintah berikut "php --ini |grep Loaded"
+sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/5.6/cli/php.ini
+
+# Cari config php fpm www.conf dengan perintah berikut "find / \( -iname "php.ini" -o -name "www.conf" \)"
+sed -i 's/listen = \/run\/php\/php5.6-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php/5.6/fpm/pool.d/www.conf
+cd
+
+# Edit port apache2 ke 8090
+wget -O /etc/apache2/ports.conf "https://raw.githubusercontent.com/idtunnel/sshtunnel/master/debian9/apache2.conf"
+
+# Edit port virtualhost apache2 ke 8090
+wget -O /etc/apache2/sites-enabled/000-default.conf "https://raw.githubusercontent.com/idtunnel/sshtunnel/master/debian9/virtualhost.conf"
+
+echo "DONE"
+/etc/init.d/apache2 restart
 
 echo
 sleep 3
@@ -185,8 +214,9 @@ cp /etc/openvpn/easy-rsa/keys/server.key /etc/openvpn
 cp /etc/openvpn/easy-rsa/keys/client.crt /etc/openvpn
 cp /etc/openvpn/easy-rsa/keys/client.key /etc/openvpn
 cp /etc/openvpn/tls-auth.key /etc/openvpn
+cd
 
-cat > /etc/openvpn/server.conf <<-EOF
+cat > /etc/openvpn/server.conf <<-END
 port 443
 proto tcp
 dev tun
@@ -216,11 +246,13 @@ log /var/log/openvpn.log
 comp-lzo
 verb 3
 mute 20
-EOF
+END
 
 systemctl start openvpn@server
 
-cat > /etc/openvpn/client.ovpn <<-EOF
+# Buat config client 
+cd /etc/openvpn
+cat > /etc/openvpn/client.ovpn <<-END
 client
 dev tun
 proto tcp-client
@@ -249,7 +281,7 @@ mute 20
 sam
 sam
 </auth-user-pass>
-EOF
+END
 sed -i $MYIP2 /etc/openvpn/client.ovpn;
 echo '<ca>' >> /etc/openvpn/client.ovpn
 cat /etc/openvpn/ca.crt >> /etc/openvpn/client.ovpn
@@ -263,7 +295,7 @@ echo '</key>' >> /etc/openvpn/client.ovpn
 # echo '<tls-auth>' >> /etc/openvpn/client.ovpn
 # cat /etc/openvpn/tls-auth.key >> /etc/openvpn/client.ovpn
 # echo '</tls-auth>' >> /etc/openvpn/client.ovpn
-cp client.ovpn /home/vps/public_html/
+cp /etc/openvpn/client.ovpn /home/vps/public_html/client.ovpn
 echo "DONE"
 /etc/init.d/openvpn restart
 
