@@ -208,8 +208,7 @@ ca ca.crt
 cert server.crt
 key server.key
 dh dh2048.pem
-auth-user-pass-verify /etc/openvpn/passwd.sh via-env
-client-cert-not-required
+plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
 username-as-common-name
 script-security 3 system
 server 10.8.0.0 255.255.255.0
@@ -224,8 +223,8 @@ comp-lzo
 max-clients 5
 persist-key
 persist-tun
-log /etc/openvpn/openvpn.log
-log-append /etc/openvpn/openvpn.log
+log openvpn.log
+log-append openvpn.log
 verb 3
 myOpenVPNconf1
 
