@@ -24,6 +24,7 @@ email=SoumyM@gmail.com
 wget -O /etc/pam.d/common-password "https://raw.githubusercontent.com/soumymafia/soumysc/master/common-password-deb9"
 chmod +x /etc/pam.d/common-password
 
+apt update && apt upgrade -y
 # go to root
 cd
 
