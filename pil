@@ -143,10 +143,9 @@ echo "/usr/sbin/nologin" >> /etc/shells
 /etc/init.d/dropbear restart
 
 # install squid
-cd
-apt-get -y install squid3
-wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/soumymafia/soumysc/master/squid3.conf"
-sed -i $MYIP2 /etc/squid/squid.conf
+apt-get -y install squid
+wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/ara-rangers/vps/master/squid3.conf"
+sed -i $MYIP2 /etc/squid/squid.conf;
 
 source /etc/os-release
 if [[ $VERSION_ID == "9" ]]; then
@@ -1236,7 +1235,7 @@ chown -R www-data:www-data /home/vps/public_html
 /etc/init.d/fail2ban restart
 /etc/init.d/webmin restart
 /etc/init.d/stunnel4 restart
-/etc/init.d/squid3 start
+/etc/init.d/squid start
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 1000 --max-connections-for-client 10 
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 10 
 rm -rf ~/.bash_history && history -c
