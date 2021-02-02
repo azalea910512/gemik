@@ -292,14 +292,14 @@ apt-get update -y
 apt-get -y install wget curl
 
 # set time GMT +7
-ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime
 
 # set locale
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
 
 # set repo
-# sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
-# wget http://www.webmin.com/jcameron-key.asc | apt-key add jcameron-key.asc
+sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
+wget http://www.webmin.com/jcameron-key.asc | apt-key add jcameron-key.asc
 
 # update
 apt-get update
@@ -814,8 +814,8 @@ wget -qO /etc/openvpn/b.zip 'https://raw.githubusercontent.com/GakodArmy/teli/ma
 unzip -qq /etc/openvpn/b.zip -d /etc/openvpn
 rm -f /etc/openvpn/b.zip
 
-wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
-chmod +x /etc/rc.local
+# wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
+# chmod +x /etc/rc.local
 
 #Create OpenVPN Config
 mkdir -p /home/vps/public_html
