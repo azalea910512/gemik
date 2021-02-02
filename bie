@@ -1,16 +1,11 @@
 apt-get update && apt-get upgrade
 echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
-apt-get install openvpn
 apt-get install curl
 apt-get install apache2
 rm /var/www/html/index.html
 rm /var/www/html/index.nginx-debian.html
 wget https://raw.githubusercontent.com/BangJaguh/cina/main/index.html
 cp index.html /var/www/html
-NIC=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
-export DEBIAN_FRONTEND=noninteractive
-OS=`uname -m`;
-MYIP=$(wget -qO- ipv4.icanhazip.com);
 echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
 sed -i '$ i\echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
 echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -124,16 +119,7 @@ verb 3' >/etc/openvpn/server-udp-25000.conf
 systemctl enable openvpn
 service openvpn restart
 cd
-sysctl -w net.ipv4.ip_forward=1
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
-iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
-iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o ens3 -j MASQUERADE
-iptables-save > /etc/iptables_yg_baru_dibikin.conf
-wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/BangJaguh/cina/main/iptables"
-chmod +x /etc/network/if-up.d/iptables
-MYIP=`curl -s ifconfig.me`;
-MYIP2="s/xxxxxxxxx/$MYIP/g";
-service openvpn restart
+
 echo "client
 dev tun
 proto tcp
@@ -149,7 +135,7 @@ auth-user-pass
 comp-lzo
 verb 3
 
-" >/var/www/html/client.ovpn
+" >/var/www/html/client-tcp-1194.ovpn
 
 echo "client
 dev tun
@@ -235,6 +221,7 @@ comp-lzo
 verb 3
 
 " >/var/www/html/instagram.ovpn
+
 cd
 apt-get install -y zip
 cd /var/www/html
@@ -249,7 +236,7 @@ echo "</cert>"
 echo "<key>"
 cat "/etc/openvpn/server.key"
 echo "</key>"
-} >>client.ovpn
+} >>client-tcp-1194.ovpn
 
 {
 echo "<ca>"
@@ -312,6 +299,50 @@ echo "</key>"
 } >>instagram.ovpn
 
 zip client-config.zip client-tcp-1194.ovpn client-tcp-9994.ovpn client-ssl-9443.ovpn client-ssl-2905.ovpn client-udp-25000.ovpn instagram.ovpn
+apt-get install -y iptables iptables-persistent netfilter-persistent
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 20.8.0.0/24 -o $NIC -j MASQUERADE
+iptables-save > /etc/iptables/rules.v4
+service openvpn restart
+country=ID
+state=Indonesia
+locality=Cilacap
+organization=HunterNblz
+organizationalunit=HunterNblz
+commonname=HunterNblz
+email=admin@nabil.my.id
+git clone https://github.com/hunternblz/ssh-installer
+cd /root/ssh-installer/files
+rm /etc/pam.d/common-password
+mv common-password /etc/pam.d/
+chmod +x /etc/pam.d/common-password
+cd
+cat > /etc/systemd/system/rc-local.service <<-END
+[Unit]
+Description=/etc/rc.local
+ConditionPathExists=/etc/rc.local
+[Service]
+Type=forking
+ExecStart=/etc/rc.local start
+TimeoutSec=0
+StandardOutput=tty
+RemainAfterExit=yes
+SysVStartPriority=99
+[Install]
+WantedBy=multi-user.target
+END
+cat > /etc/rc.local <<-END
+exit 0
+END
+chmod +x /etc/rc.local
+systemctl enable rc-local
+systemctl start rc-local.service
+apt-get update -y
+apt-get install -y wget curl
+apt -y autoremove
+apt -y autoclean
+apt -y clean
 
 wget https://raw.githubusercontent.com/jm051484/AutoPrivoxy/master/AutoPrivoxy.sh && bash AutoPrivoxy.sh
 wget https://raw.githubusercontent.com/padubang/gans/main/setupmenu && bash setupmenu
