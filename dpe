@@ -211,22 +211,19 @@ tls-auth ta.key 0
 plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
 client-cert-not-required
 username-as-common-name
-server 192.168.100.0 255.255.255.0
+topology subnet
+server 10.8.0.0 255.255.255.0
 ifconfig-pool-persist ipp.txt
 push "redirect-gateway def1 bypass-dhcp"
-push "block-outside-dns"
-push "register-dns"
-push "dhcp-option DNS 1.1.1.1"
-push "dhcp-option DNS 1.0.0.1"
-push "route-method exe"
-push "route-delay 2"
-duplicate-cn
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
 keepalive 10 120
+cipher AES-256-CBC
 comp-lzo
-max-clients 5
+user nobody
+group nogroup
 persist-key
 persist-tun
-cipher none
 status server-tcp-1194.log
 verb 3' >/etc/openvpn/server-tcp-1194.conf
 
@@ -284,27 +281,22 @@ echo "client
 client
 dev tun
 proto tcp
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote $MYIP 443
-http-proxy-retry
 http-proxy $MYIP 8080
-persist-key
-persist-tun
-pull
 resolv-retry infinite
 nobind
-comp-lzo
-setenv CLIENT_CERT 0
+persist-key
+persist-tun
 remote-cert-tls server
-verb 3
-mute-replay-warnings
-auth-user-pass
-auth-nocache
-redirect-gateway def1
-script-security 2
-route-method exe
-route-delay 2
-cipher none
+cipher AES-256-CBC
+comp-lzo
 key-direction 1
+verb 3
+<auth-user-pass>
+sam
+sam
+</auth-user-pass>
 
 " >/var/www/html/client.ovpn
 
