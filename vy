@@ -1,14 +1,17 @@
 #!/bin/bash
-# ******************************************
-# Program: Autoscript Setup VPS 2020
-# Developer: TONGGAKOD
-# Nickname: TONGGAKOD
-# Modify : @ANNTTL 
-# Date: 11-05-2016
-# Last Updated: 20-01-2019
-# ******************************************
-# START SCRIPT ( TONGGAKOD )
+if [[ "$EUID" -ne 0 ]]; then
+	echo ""
+	echo "กรุณาเข้าสู่ระบบผู้ใช้ root ก่อนทำการใช้งานสคริปท์"
+	echo "คำสั่งเข้าสู่ระบบผู้ใช้ root คือ sudo -i"
+	echo ""
+	exit
+fi
 
+if [[ ! -e /dev/net/tun ]]; then
+	echo ""
+	echo "TUN ไม่สามารถใช้งานได้"
+	exit
+fi
 # initializing var
 export DEBIAN_FRONTEND=noninteractive
 OS=`uname -m`;
