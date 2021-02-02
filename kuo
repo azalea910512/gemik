@@ -18,7 +18,7 @@ echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
 sed -i '$ i\echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
 
 # update repository
-apt update -y
+apt update && apt upgrade -y
 
 # Install PHP 5.6
 apt-get install sudo -y
@@ -268,10 +268,7 @@ chmod +x /etc/network/if-up.d/iptables
 
 # install squid3
 cd
-apt-get -y install squid3
-wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/idtunnel/sshtunnel/master/debian9/squid3.conf"
-sed -i $MYIP2 /etc/squid/squid.conf;
-/etc/init.d/squid restart
+wget https://raw.githubusercontent.com/ndndndn/CodesX/main/sq3.sh && bash sq3.sh
 
 # download script
 cd /usr/bin
