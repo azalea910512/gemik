@@ -165,8 +165,6 @@ apt-get -y install squid3
 wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/soumymafia/soumysc/master/squid3.conf"
 sed -i $MYIP2 /etc/squid/squid.conf
 
-source /etc/os-release
-if [[ $VERSION_ID == "9" ]]; then
 # install openvpn
 mkdir -p /etc/iptables
 apt-get install -y openvpn easy-rsa iptables openssl ca-certificates gnupg
