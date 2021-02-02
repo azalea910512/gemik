@@ -221,28 +221,12 @@ echo "MANTAP"
 echo 1 > /proc/sys/net/ipv4/ip_forward
 sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
 sysctl -p
-# folder iptables
-mkdir -p /etc/iptables
+
 
 # install openvpn
 
 apt-get update -y
-apt-get install openvpn iptables openssl ca-certificates gnupg -y
-apt-get install -y net-tools
-
-cp -r /usr/share/easy-rsa /etc/openvpn/
-cd /etc/openvpn/easy-rsa
-cp vars.example vars
-
-(echo -en "\n\n\n\n\n\n\n\n"; sleep 1; echo -en "\n"; sleep 1; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n") | ./easyrsa init-pki
-
-(echo -en "\n\n\n\n\n\n\n\n"; sleep 1; echo -en "\n"; sleep 1; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n") | ./easyrsa build-ca nopass
-
-(echo -en "\n\n\n\n\n\n\n\n"; sleep 1; echo -en "\n"; sleep 1; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n") | ./easyrsa gen-req server nopass
-
-(echo -en "yes") | ./easyrsa sign-req server server
-
-(echo -en "\n\n\n\n\n\n\n\n"; sleep 1; echo -en "\n"; sleep 1; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n"; sleep 3; echo -en "yes"; echo -en "\n") | ./easyrsa gen-dh
+apt-get install openvpn -y
 
  # Creating server.conf, ca.crt, server.crt and server.key
  cat <<'myOpenVPNconf1' > /etc/openvpn/servertcp.conf
