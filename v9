@@ -49,11 +49,30 @@ cat > /etc/rc.local <<-END
 # By default this script does nothing.
 exit 0
 END
-
+# OpenVPN Config Download Port
+OvpnDownload_Port='80' # Before changing this value, please read this document. It contains all unsafe ports for Google Chrome Browser, please read from line #23 to line #89: https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
 # Mengizinkan Root Akses Dan Mengizinkan RC LOCAL SERVICE
 chmod +x /etc/rc.local
 systemctl enable rc-local
 systemctl start rc-local.service
+
+ 
+ # Installing some important machine essentials
+ apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
+ 
+ # Now installing all our wanted services
+ apt-get install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid -y
+
+ # Installing all required packages to install Webmin
+ apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python dbus libxml-parser-perl -y
+ apt-get install shared-mime-info jq fail2ban -y
+
+ 
+ # Installing a text colorizer
+ gem install lolcat
+
+ # Trying to remove obsolette packages after installation
+ apt-get autoremove -y
 
 # Menghentikan IPV6 Karna Memakai IPV4 Saja
 echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6
@@ -90,13 +109,6 @@ apt -y install neofetch
 echo "clear" >> .profile
 echo "neofetch" >> .profile
 
-# install webserver
-apt-get -y install nginx php-fpm php-cli
-apt -y install nginx
-rm /etc/nginx/sites-enabled/default
-wget -O /etc/nginx/sites-enabled/default "https://raw.githubusercontent.com/azalea910512/gemik/main/default"
-
-function InsOpenVPN(){
  # Checking if openvpn folder is accidentally deleted or purged
  if [[ ! -e /etc/openvpn ]]; then
   mkdir -p /etc/openvpn
@@ -486,11 +498,28 @@ jrZFH4tMHWZ+mBTRA/76xsbBGWtkxND932g1vAc281EHv9+4iyW1SdvUTJNzZObh
 -----END X509 CRL-----
 EOF103
 
+ # Creating nginx config for our ovpn config downloads webserver
+ cat <<'myNginxC' > /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
+# My OpenVPN Config Download Directory
+server {
+ listen 0.0.0.0:myNginx;
+ server_name localhost;
+ root /var/www/openvpn;
+ index index.html;
+}
+myNginxC
+
+ # Setting our nginx config port for .ovpn download site
+ sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
+
+ # Removing Default nginx page(port 80)
+ rm -rf /etc/nginx/sites-*
+
  # Creating our root directory for all of our .ovpn configs
  rm -rf /var/www/openvpn
  mkdir -p /var/www/openvpn
 # Now creating all of our OpenVPN Configs 
-cat <<EOF152> /var/www/openvpn/GTMConfig.ovpn
+cat <<EOF152> /var/www/openvpn/client.ovpn
 client
 dev tun
 remote $IPADDR $OpenVPN_Port1 tcp
