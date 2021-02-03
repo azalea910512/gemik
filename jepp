@@ -30,6 +30,11 @@ SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/bann
 Dropbear_Port1='109'
 Dropbear_Port2='442'
 
+# Squid Ports
+Squid_Port1='3128'
+Squid_Port2='8080'
+Squid_Port3='8888'
+
 # Stunnel Ports
 # Stunnel_Port1='444' # through Dropbear
 # Stunnel_Port2='440' # through OpenSSH
