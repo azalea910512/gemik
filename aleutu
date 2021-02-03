@@ -10,7 +10,7 @@ MyScriptName='SigulaDev-Premium Script'
 # OpenSSH Ports
 SSH_Port1='22'
 SSH_Port2='53'
-SSH_Port2='80'
+SSH_Port2='820'
 
 # Your SSH Banner
 SSH_Banner='https://raw.githubusercontent.com/raziman869/AutoScriptDB/master/Files/Plugins/banner'
@@ -34,10 +34,10 @@ Privoxy_Port2='8086'
 # Squid Ports
 Squid_Port1='3128'
 Squid_Port2='8080'
-Squid_Port3='80'
+Squid_Port3='8888'
 
 # OpenVPN Config Download Port
-OvpnDownload_Port='85' # Before changing this value, please read this document. It contains all unsafe ports for Google Chrome Browser, please read from line #23 to line #89: https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
+OvpnDownload_Port='80' # Before changing this value, please read this document. It contains all unsafe ports for Google Chrome Browser, please read from line #23 to line #89: https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
 
 # Server local time
 MyVPS_Time='Asia/Manila'
@@ -251,8 +251,8 @@ port OVPNTCP
 proto tcp
 dev tun
 dev-type tun
-sndbuf 100000
-rcvbuf 100000
+sndbuf 0
+rcvbuf 0
 crl-verify crl.pem
 ca ca.crt
 cert server.crt
@@ -283,32 +283,35 @@ myOpenVPNconf
 cat <<'myOpenVPNconf2' > /etc/openvpn/server_udp.conf
 # OpenVPN UDP
 port OVPNUDP
-dev tun
 proto udp
 dev tun
+dev-type tun
+sndbuf 0
+rcvbuf 0
+crl-verify crl.pem
+ca ca.crt
+cert server.crt
+key server.key
+tls-auth tls-auth.key 0
+dh dh.pem
+topology subnet
+server 10.9.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+keepalive 10 120
+cipher AES-256-CBC
+auth SHA256
+comp-lzo
 user nobody
 group nogroup
-persist-key
 persist-tun
-keepalive 10 120
-topology subnet
-server 10.8.0.0 255.255.255.0
-ifconfig-pool-persist ipp.txt
-push "dhcp-option DNS 1.0.0.1"
-push "dhcp-option DNS 1.1.1.1"
-push "redirect-gateway def1 bypass-dhcp" 
-crl-verify /etc/openvpn/crl.pem
-ca /etc/openvpn/ca.crt
-cert /etc/openvpn/server.crt
-key /etc/openvpn/server.key
-dh /etc/openvpn/dh.pem
-tls-auth /etc/openvpn/tls-auth.key 0
-tls-server
-tls-version-min 1.2
-tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
-status openvpn.log
-verb 3
+status openvpn-status.log
+verb 2
+mute 3
 plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
+verify-client-cert none
 username-as-common-name
 myOpenVPNconf2
 
@@ -807,6 +810,7 @@ myNginxC
 cat <<EOF152> /var/www/openvpn/tcp.ovpn
 client
 dev tun
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote $IPADDR $OpenVPN_TCP_Port tcp
 http-proxy $IPADDR $Squid_Port1
 http-proxy-retry
@@ -826,8 +830,8 @@ ping-restart 60
 hand-window 70
 server-poll-timeout 4
 reneg-sec 2592000
-sndbuf 100000
-rcvbuf 100000
+sndbuf 0
+rcvbuf 0
 remote-cert-tls server
 key-direction 1
 
@@ -854,7 +858,8 @@ cat <<EOF16> /var/www/openvpn/udp.ovpn
 client
 dev tun
 proto udp
-remote $IPADDR $OpenVPN_Port2
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
+remote $IPADDR $OpenVPN_UDP_Port
 resolv-retry infinite
 route-method exe
 nobind
@@ -871,8 +876,8 @@ ping-restart 60
 hand-window 70
 server-poll-timeout 4
 reneg-sec 2592000
-sndbuf 100000
-rcvbuf 100000
+sndbuf 0
+rcvbuf 0
 remote-cert-tls server
 key-direction 1
 <auth-user-pass>
@@ -897,6 +902,7 @@ cat <<EOF17> /var/www/openvpn/ssl.ovpn
 client
 proto tcp-client
 dev tun
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote 127.0.0.1 443
 route $IPADDR 255.255.255.255 net_gateway 
 http-proxy $IPADDR 8080
@@ -917,8 +923,8 @@ ping-restart 60
 hand-window 70
 server-poll-timeout 4
 reneg-sec 2592000
-sndbuf 100000
-rcvbuf 100000
+sndbuf 0
+rcvbuf 0
 remote-cert-tls server
 key-direction 1
 <auth-user-pass>
