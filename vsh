@@ -485,9 +485,6 @@ jrZFH4tMHWZ+mBTRA/76xsbBGWtkxND932g1vAc281EHv9+4iyW1SdvUTJNzZObh
 -----END X509 CRL-----
 EOF103
 
-}
-function InsProxy(){
-
  # Removing Duplicate privoxy config
  rm -rf /etc/privoxy/config*
  
@@ -566,9 +563,7 @@ mySquid
  # Starting Proxy server
  echo -e "Restarting proxy server..."
  systemctl restart squid
-}
 
-function OvpnConfigs(){
  # Creating nginx config for our ovpn config downloads webserver
  cat <<'myNginxC' > /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
 # My OpenVPN Config Download Directory
