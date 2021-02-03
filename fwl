@@ -11,7 +11,7 @@
 #############################
 # Variables (Can be changed depends on your preferred values)
 # Script name
-MyScriptName='PandaEver Installer'
+MyScriptName='Panda'
 
 # OpenSSH Ports
 SSH_Port1='22'
@@ -141,40 +141,6 @@ MySSHConfig
  
  # Restarting openssh service
  systemctl restart ssh
- 
- # Configure rc.local
- cat <<EOF >/etc/rc.local
-#!/bin/sh -e
-#
-# rc.local
-#
-# This script is executed at the end of each multiuser runlevel.
-# Make sure that the script will "exit 0" on success or any other
-# value on error.
-#
-# In order to enable or disable this script just change the execution
-# bits.
-#
-# By default this script does nothing.
-exit 0
-EOF
-chmod +x /etc/rc.local
-systemctl daemon-reload
-systemctl start rc-local
-
-# Installing Badvpn-Udpgw
- apt-get install cmake make gcc -y
- cd
- wget https://raw.githubusercontent.com/janda09/private/master/badvpn-1.999.128.tar.bz2
- tar xf badvpn-1.999.128.tar.bz2
- mkdir badvpn-build
- cd badvpn-build
- cmake ~/badvpn-1.999.128 -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1
- make install
- echo 'badvpn-udpgw --listen-addr 127.0.0.1:Badvpn_Port1 > /dev/nul &' >> /etc/rc.local
- badvpn-udpgw --listen-addr 127.0.0.1:Badvpn_Port1 > /dev/nul &
- echo 'badvpn-udpgw --listen-addr 127.0.0.1:Badvpn_Port2 > /dev/nul &' >> /etc/rc.local
- badvpn-udpgw --listen-addr 127.0.0.1:Badvpn_Port2 > /dev/nul &
  
  # Removing some duplicate config file
  rm -rf /etc/default/dropbear*
