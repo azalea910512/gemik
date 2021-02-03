@@ -1,0 +1,374 @@
+#!/bin/bash
+# Gakod script
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Install Var Script / Host IP
+export DEBIAN_FRONTEND=noninteractive
+OS=`uname -m`;
+echo "Masukin Domain Mu Sayang - Script Recode By WILDYVPN"
+read -p "Hostname :" host
+echo "IP=$host" >> /root/ipvps.conf
+MYIP=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+NET=$(ip -o $ANU -4 route show to default | awk '{print $5}');
+source /etc/os-release
+ver=$VERSION_ID
+
+#detail nama perusahaan
+country=MY
+state=Keningau
+locality=sabah
+organization=gakod.com
+organizationalunit=gakod.com
+commonname=gakod.com
+email=gakod@gmail.com
+Locate=gakodds
+
+# Root
+cd
+
+# Ngedit File Di RC LOCAL
+cat > /etc/systemd/system/rc-local.service <<-END
+[Unit]
+Description=/etc/rc.local
+ConditionPathExists=/etc/rc.local
+[Service]
+Type=forking
+ExecStart=/etc/rc.local start
+TimeoutSec=0
+StandardOutput=tty
+RemainAfterExit=yes
+SysVStartPriority=99
+[Install]
+WantedBy=multi-user.target
+END
+
+# Ngedit File RC LOCAL 2
+cat > /etc/rc.local <<-END
+#!/bin/sh -e
+# rc.local
+# By default this script does nothing.
+exit 0
+END
+
+# Mengizinkan Root Akses Dan Mengizinkan RC LOCAL SERVICE
+chmod +x /etc/rc.local
+systemctl enable rc-local
+systemctl start rc-local.service
+
+# Menghentikan IPV6 Karna Memakai IPV4 Saja
+echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+sed -i '$ i\echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
+
+# Menginstall WEBMIN 
+sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
+wget http://www.webmin.com/jcameron-key.asc
+apt-key add jcameron-key.asc
+
+# Update vps , install curl , hapus file ga kepakai dan setting waktu vps
+apt update -y
+apt upgrade -y
+apt dist-upgrade -y
+apt -y install wget curl
+apt -y autoremove
+apt -y autoclean
+apt -y clean
+apt -y remove --purge unscd
+ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime
+sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
+
+# Menginstall Neofetch , Make , Git , GCC, Curl , BZIP , Unzip , Screen , CMAKE dan clear profile
+apt -y install gcc
+apt -y install make
+apt -y install cmake
+apt -y install git
+apt -y install screen
+apt -y install unzip
+apt -y install curl
+apt -y install zlib1g-dev
+apt -y install bzip2
+apt -y install neofetch
+echo "clear" >> .profile
+echo "neofetch" >> .profile
+
+# install webserver
+apt-get -y install nginx php-fpm php-cli
+apt -y install nginx
+rm /etc/nginx/sites-enabled/default
+wget -O /etc/nginx/sites-enabled/default "https://raw.githubusercontent.com/insanpendosa/ssh-installer/main/nginx/default"
+
+# Creating our root directory for all of our .ovpn configs
+rm -rf /var/www/openvpn
+mkdir -p /var/www/openvpn
+apt-get -y install openvpn
+cd /etc/openvpn/
+wget -O openvpn.tar "https://raw.githubusercontent.com/bengali89/tls/main/Hdhdb79/openvpn.tar"
+tar xf openvpn.tar;rm openvpn.tar
+wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
+chmod +x /etc/rc.local
+
+ # Now creating all of our OpenVPN Configs 
+cat <<EOF152> /var/www/openvpn/GTMConfig.ovpn
+# Credits to GakodX
+client
+dev tun
+remote $IPADDR $OpenVPN_Port1 tcp
+http-proxy $(curl -s http://ipinfo.io/ip || wget -q http://ipinfo.io/ip) $Proxy_Port
+resolv-retry infinite
+route-method exe
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+comp-lzo
+cipher AES-256-CBC
+auth SHA256
+push "redirect-gateway def1 bypass-dhcp"
+verb 3
+push-peer-info
+ping 10
+ping-restart 60
+hand-window 70
+server-poll-timeout 4
+reneg-sec 2592000
+sndbuf 100000
+rcvbuf 100000
+remote-cert-tls server
+key-direction 1
+<auth-user-pass>
+sam
+sam
+</auth-user-pass>
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/tls-auth.key)
+</tls-auth>
+EOF152
+
+ # Creating OVPN download site index.html
+cat <<'mySiteOvpn' > /var/www/openvpn/index.html
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Simple OVPN Download site by Sigula -->
+
+<head><meta charset="utf-8" /><title>Sigula OVPN Config Download</title><meta name="description" content="MyScriptName Server" /><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" /><meta name="theme-color" content="#000000" /><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"><link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.3/css/mdb.min.css" rel="stylesheet"></head><body><div class="container justify-content-center" style="margin-top:9em;margin-bottom:5em;"><div class="col-md"><div class="view"><img src="https://openvpn.net/wp-content/uploads/openvpn.jpg" class="card-img-top"><div class="mask rgba-white-slight"></div></div><div class="card"><div class="card-body"><h5 class="card-title">Config List</h5><br /><ul class="list-group"><li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> UDP Server For TU/CTC/CTU Promos</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/tcp.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li><li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> TCP+Proxy Server For TU/CTC/CTU Promos</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/udp.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li><li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Globe/TM <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For EasySURF/GoSURF/GoSAKTO Promos with WNP,SNS,FB and IG freebies</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/ssl.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li><li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Modem</span><br /><small> Without Promo/Noload (Reconnecting Server, Use Low-latency VPS for fast reconnectivity)</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/sun-noload.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li></ul></div></div></div></div></body></html>
+mySiteOvpn
+ 
+ # Setting template's correct name,IP address and nginx Port
+ sed -i "s|NGINXPORT|$OvpnDownload_Port|g" /var/www/openvpn/index.html
+ sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/index.html
+
+ # Restarting nginx service
+ systemctl restart nginx
+
+# Menginstall badvpn dan Configurasi Badvpn Client dan IP IPnya
+cd
+wget -O /usr/bin/badvpn-udpgw "https://wildyvpn.my.id/script/badvpn-udpgw64"
+sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 1000' /etc/rc.local
+sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 1000' /etc/rc.local
+sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000' /etc/rc.local
+chmod +x /usr/bin/badvpn-udpgw
+screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 1000
+screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 1000
+screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000
+
+# Membuka Port 22 Untuk Root User Dan Nginstall DropBear Port ya Sayang kuu
+sed -i 's/Port 22/Port 22/g' /etc/ssh/sshd_config
+apt -y install dropbear
+sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=143/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 110 -p 109 -p 456"/g' /etc/default/dropbear
+wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2020.80.tar.bz2
+bzip2 -cd dropbear-2020.80.tar.bz2 | tar xvf -
+cd dropbear-2020.80
+./configure
+make && make install
+mv /usr/sbin/dropbear /usr/sbin/dropbear.old
+ln /usr/local/sbin/dropbear /usr/sbin/dropbear
+echo "/bin/false" >> /etc/shells
+echo "/usr/sbin/nologin" >> /etc/shells
+/etc/init.d/dropbear restart
+rm -f /root/dropbear-2020.80.tar.bz2
+rm -rf /root/dropbear-2020.80
+
+# install squid3 port dan install file config squid 3
+cd
+apt -y install squid3
+wget -O /etc/squid/squid.conf "https://wildyvpn.my.id/script/squidbaru.conf"
+sed -i $MYIP2 /etc/squid/squid.conf
+
+# Menginstall VN Stat Dan Config VNSTAT
+apt -y install vnstat
+/etc/init.d/vnstat restart
+apt -y install libsqlite3-dev
+wget https://humdi.net/vnstat/vnstat-2.6.tar.gz
+tar zxvf vnstat-2.6.tar.gz
+cd vnstat-2.6
+./configure --prefix=/usr --sysconfdir=/etc && make && make install 
+cd
+vnstat -u -i $NET
+chown vnstat:vnstat /var/lib/vnstat -R
+systemctl enable vnstat
+/etc/init.d/vnstat restart
+rm -f /root/vnstat-2.6.tar.gz 
+rm -rf /root/vnstat-2.6
+
+
+# Menginstall Parser XML
+cd
+apt install -y libxml-parser-perl
+
+# install stunnel
+apt-get install stunnel4 -y
+cat > /etc/stunnel/stunnel.conf <<-END
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = a:SO_REUSEADDR=1
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+[dropbear]
+accept = 442
+connect = 127.0.0.1:443
+END
+
+# make a certificate
+openssl genrsa -out key.pem 2048
+openssl req -new -x509 -key key.pem -out cert.pem -days 1095 \
+-subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email"
+cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
+
+# configure stunnel
+sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+/etc/init.d/stunnel4 restart
+
+cd
+
+# install vnstat gui
+apt-get install vnstat
+cd /home/vps/public_html/
+wget http://www.sqweek.com/sqweek/files/vnstat_php_frontend-1.5.1.tar.gz
+tar xf vnstat_php_frontend-1.5.1.tar.gz
+rm vnstat_php_frontend-1.5.1.tar.gz
+mv vnstat_php_frontend-1.5.1 vnstat
+cd vnstat
+sed -i "s/eth0/venet0/g" config.php
+sed -i "s/\$iface_list = array('venet0', 'sixxs');/\$iface_list = array('venet0');/g" config.php
+sed -i "s/\$language = 'nl';/\$language = 'en';/g" config.php
+sed -i "s/Internal/Internet/g" config.php
+sed -i "/SixXS IPv6/d" config.php
+service vnstat restart
+
+echo "UPDATE AND INSTALL COMPLETE COMPLETE 99% BE PATIENT"
+rm *.sh;rm *.txt;rm *.tar;rm *.deb;rm *.asc;rm *.zip;rm ddos*;
+
+clear
+# freeradius
+apt-get -y install freeradius
+cat /dev/null > /etc/freeradius/users
+echo "ara Cleartext-Password := ara" > /etc/freeradius/users
+# Lock Dropbear Expired ID
+wget -O /usr/local/bin/lockidexp.sh "https://raw.githubusercontent.com/ara-rangers/vps/master/lockidexp.sh"
+chmod +x /usr/local/bin/lockidexp.sh
+crontab -l > mycron
+echo "1 8 * * * /usr/local/bin/lockidexp.sh" >> mycron
+crontab mycron
+rm mycron
+# BlockTorrent
+wget -O /usr/local/bin/BlockTorrentEveryReboot "https://raw.githubusercontent.com/ara-rangers/vps/master/BlockTorrentEveryReboot"
+chmod +x /usr/local/bin/BlockTorrentEveryReboot
+crontab -l > mycron
+echo "@reboot /usr/local/bin/BlockTorrentEveryReboot" >> mycron
+crontab mycron
+rm mycron
+# restart service
+service stunnel4 restart
+service ssh restart
+service openvpn restart
+service dropbear restart
+service nginx restart
+service webmin restart
+service squid restart
+service fail2ban restart
+service freeradius restart
+clear
+
+# softether
+apt install build-essential -y;
+cd && wget https://github.com/SoftEtherVPN/SoftEtherVPN_Stable/releases/download/v4.28-9669-beta/softether-vpnserver-v4.28-9669-beta-2018.09.11-linux-x64-64bit.tar.gz
+tar xzf softether-vpnserver-v4.28-9669-beta-2018.09.11-linux-x64-64bit.tar.gz
+clear
+echo  -e "\033[31;7mNOTE: ANSWER 1 AND ENTER THREE TIMES FOR THE COMPILATION TO PROCEED\033[0m"
+cd vpnserver && make && ./vpnserver start
+mkdir /usr/local/vpnserver/
+cd && mv vpnserver /usr/local && cd /usr/local/vpnserver/ && chmod 600 * && chmod 700 vpnserver && chmod 700 vpncmd
+crontab -l > mycron
+echo "@reboot /usr/local/vpnserver/vpnserver start" >> mycron
+crontab mycron
+rm mycron
+/usr/local/vpnserver/vpnserver start
+clear
+
+# finishing
+cd
+chown -R www-data:www-data /home/vps/public_html
+/etc/init.d/nginx restart
+/etc/init.d/openvpn restart
+/etc/init.d/cron restart
+/etc/init.d/ssh restart
+/etc/init.d/dropbear restart
+/etc/init.d/fail2ban restart
+/etc/init.d/webmin restart
+/etc/init.d/stunnel4 restart
+/etc/init.d/squid start
+rm -rf ~/.bash_history && history -c
+echo "unset HISTFILE" >> /etc/profile
+
+# grep ports 
+opensshport="$(netstat -ntlp | grep -i ssh | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+dropbearport="$(netstat -nlpt | grep -i dropbear | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+stunnel4port="$(netstat -nlpt | grep -i stunnel | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+openvpnport="$(netstat -nlpt | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+squidport="$(cat /etc/squid/squid.conf | grep -i http_port | awk '{print $2}')"
+nginxport="$(netstat -nlpt | grep -i nginx| grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+
+# END SCRIPT ( RANGERSVPN )
+echo "========================================"  | tee -a log-install.txt
+echo "Service Autoscript VPS (RANGERSVPN)"  | tee -a log-install.txt
+echo "----------------------------------------"  | tee -a log-install.txt
+echo "POWER BY RANGERSVPN CALL +601126996292"  | tee -a log-install.txt
+echo "nginx : http://$MYIP:80"   | tee -a log-install.txt
+echo "Webmin : http://$MYIP:10000/"  | tee -a log-install.txt
+echo "OpenVPN  : TCP 443 (client config : http://$MYIP/client.ovpn)"  | tee -a log-install.txt
+echo "Badvpn UDPGW : 7300"   | tee -a log-install.txt
+echo "Stunnel SSL/TLS : 442"   | tee -a log-install.txt
+echo "Squid3 : 3128,3129,8080,8000,9999"  | tee -a log-install.txt
+echo "OpenSSH : 22"  | tee -a log-install.txt
+echo "Dropbear : 444"  | tee -a log-install.txt
+echo "Fail2Ban : [on]"  | tee -a log-install.txt
+echo "AntiDDOS : [on]"  | tee -a log-install.txt
+echo "Modify(@aramaiti85)AntiTorrent : [on]"  | tee -a log-install.txt
+echo "Timezone : Asia/Kuala_Lumpur"  | tee -a log-install.txt
+echo "Menu : type menu to check menu script"  | tee -a log-install.txt
+echo ""  | tee -a log-install.txt
+echo "RADIUS Authentication Settings:"  | tee -a log-install.txt
+echo "Radius Server Hostname: 127.0.0.1"  | tee -a log-install.txt
+echo "Radius Port: 1812 (UDP)"  | tee -a log-install.txt
+echo "Shared Secret: testing123"  | tee -a log-install.txt
+echo ""  | tee -a log-install.txt
+echo "SoftEtherVPN Port: 8888"  | tee -a log-install.txt
+echo ""  | tee -a log-install.txt
+echo "----------------------------------------"
+echo "LOG INSTALL  --> /root/log-install.txt"
+echo "----------------------------------------"
+echo "========================================"  | tee -a log-install.txt
+echo "      PLEASE REBOOT TAKE EFFECT !"
+echo "========================================"  | tee -a log-install.txt
+cat /dev/null > ~/.bash_history && history -c
