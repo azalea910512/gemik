@@ -422,7 +422,7 @@ chmod +x /etc/iptables/rules.v4
 systemctl enable openvpn
 systemctl start openvpn
 /etc/init.d/openvpn restart
-fi
+
 
 function debian_10(){
 echo "INSTALANDO OPENVPN EN UBUNTU 14...\n"
@@ -1067,7 +1067,7 @@ service openvpn restart
 
 # done
 
-fi
+
 # setting vnstat
 apt-get -y update;apt-get -y install vnstat;vnstat -u -i eth0;service vnstat restart 
 
