@@ -472,7 +472,8 @@ jrZFH4tMHWZ+mBTRA/76xsbBGWtkxND932g1vAc281EHv9+4iyW1SdvUTJNzZObh
 6GJJ6ESQE6h3vJJpVeoFCg==
 -----END X509 CRL-----
 EOF103
-
+#Create OpenVPN Config
+mkdir -p /home/vps/public_html
 # Now creating all of our OpenVPN Configs 
 cat <<EOF152> /home/vps/public_html/tcp.ovpn
 client
