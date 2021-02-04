@@ -48,11 +48,6 @@ sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
 # update
 apt-get update; apt-get -y upgrade;
 
-# install webserver extensions
-apt-get -y install nginx
-apt-get -y install php7.0-fpm
-apt-get -y install php7.0-cli
-
 # install screenfetch
 cd
 wget -O /usr/bin/screenfetch "https://raw.githubusercontent.com/gatotx/AutoScriptDebian9/main/Res/Screenfetch/screenfetch"
@@ -60,76 +55,245 @@ chmod +x /usr/bin/screenfetch
 echo "clear" >> .profile
 echo "screenfetch" >> .profile
 
+
+# install webserver
+apt-get -y install nginx libexpat1-dev libxml-parser-perl
+
+# install essential package
+apt-get -y install nano iptables-persistent dnsutils screen whois ngrep unzip unrar
+
+# install webserver extensions
+apt-get -y install nginx
+apt-get -y install php7.0-fpm
+apt-get -y install php7.0-cli
+
 # nginx
 rm /etc/nginx/sites-enabled/default
 rm /etc/nginx/sites-available/default
 wget -O /etc/php/7.0/fpm/pool.d/www.conf "https://raw.githubusercontent.com/KeningauVPS/sslmode/master/www.conf"
 mkdir -p /home/vps/public_html
 echo "<?php phpinfo(); ?>" > /home/vps/public_html/info.php
-wget -O /home/vps/public_html/index.html https://raw.githubusercontent.com/padubang/secret/main/index.html
+wget -O /home/vps/public_html/index.html https://raw.githubusercontent.com/GakodArmy/teli/main/index.html
 wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/ara-rangers/vps/master/vps.conf"
 sed -i 's/listen = \/var\/run\/php7.0-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php/7.0/fpm/pool.d/www.conf
-service php7.0-fpm restart
 
-# install openvpn
+#  openvpn
 apt-get -y install openvpn
-wget -O /etc/openvpn/openvpn.tar "https://raw.githubusercontent.com/azalea910512/gemik/main/openvpn-debian.tar"
 cd /etc/openvpn/
-tar xf openvpn.tar
+wget -O openvpn.tar "https://raw.githubusercontent.com/GakodArmy/teli/main/9/openvpn.tar"
+tar xf openvpn.tar;rm openvpn.tar
+wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
+chmod +x /etc/rc.local
 
-# openvpn config
-cat > /home/vps/public_html/sam.ovpn <<-END
-# OpenVPN Configuration By Markzukieburg
-client
-dev tun
+ # Creating server.conf, ca.crt, server.crt and server.key
+ cat <<'myOpenVPNconf1' > /etc/openvpn/servertcp.conf
+# GakodScript
+
+port 1102
 proto tcp
-remote $MYIP 1102
-http-proxy $MYIP 8080
+dev tun
+dev-type tun
+sndbuf 100000
+rcvbuf 100000
+crl-verify crl.pem
+ca ca.crt
+cert server.crt
+key server.key
+tls-auth tls-auth.key 0
+dh dh.pem
+topology subnet
+server 10.9.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+keepalive 10 120
+cipher AES-256-CBC
+auth SHA256
+comp-lzo
+user nobody
+group nogroup
+persist-tun
+status openvpn-status.log
+verb 2
+mute 3
+plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
+username-as-common-name
+myOpenVPNconf1
+
+cat <<'myOpenVPNconf2' > /etc/openvpn/serverudp.conf
+# GakodScript
+
+port 1194
+proto udp
+dev tun
+user nobody
+group nogroup
 persist-key
 persist-tun
-auth-nocache
-nobind
-comp-lzo
+keepalive 10 120
+topology subnet
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "dhcp-option DNS 1.0.0.1"
+push "dhcp-option DNS 1.1.1.1"
+push "redirect-gateway def1 bypass-dhcp" 
+crl-verify crl.pem
+ca ca.crt
+cert server.crt
+key server.key
+tls-auth tls-auth.key 0
+dh dh.pem
+auth SHA256
+cipher AES-128-CBC
+tls-server
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+status openvpn.log
 verb 3
+plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
+username-as-common-name
+myOpenVPNconf2
+
+#Create OpenVPN Config
+mkdir -p /home/vps/public_html
+ # Now creating all of our OpenVPN Configs 
+cat <<EOF152> /home/vps/public_html/tcp.ovpn
+# Credits to Gakod Memgganas
+client
+dev tun
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
+remote $MYIP 1102 tcp
+http-proxy $MYIP 8080
 resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+comp-lzo
+cipher AES-256-CBC
+auth SHA256
+push "redirect-gateway def1 bypass-dhcp"
+verb 3
+push-peer-info
+ping 10
+ping-restart 60
+hand-window 70
+server-poll-timeout 4
+reneg-sec 2592000
+sndbuf 100000
+rcvbuf 100000
 remote-cert-tls server
-cipher AES-256-GCM
+key-direction 1
 <auth-user-pass>
 sam
 sam
 </auth-user-pass>
-END
-echo '<ca>' >> /home/vps/public_html/sam.ovpn
-cat /etc/openvpn/keys/ca.crt >> /home/vps/public_html/sam.ovpn
-echo '</ca>' >> /home/vps/public_html/sam.ovpn
-cd /home/vps/public_html/
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/tls-auth.key)
+</tls-auth>
+EOF152
 
-cat > /home/vps/public_html/ssl.ovpn <<-END
-# OpenVPN Configuration By Markzukieburg
+cat <<EOF150> /home/vps/public_html/ssl.ovpn
+# Credits to Gakod Memgganas
 client
 dev tun
 proto tcp
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote 127.0.0.1 1102
 route $MYIP 255.255.255.255 net_gateway
+http-proxy $MYIP 8080
+resolv-retry infinite
+route-method exe
+nobind
 persist-key
 persist-tun
-auth-user-pass
-auth-nocache
-nobind
 comp-lzo
+cipher AES-256-CBC
+auth SHA256
+push "redirect-gateway def1 bypass-dhcp"
 verb 3
-resolv-retry infinite
+push-peer-info
+ping 10
+ping-restart 60
+hand-window 70
+server-poll-timeout 4
+reneg-sec 2592000
+sndbuf 100000
+rcvbuf 100000
 remote-cert-tls server
-cipher AES-256-GCM
+key-direction 1
 <auth-user-pass>
 sam
 sam
 </auth-user-pass>
-END
-echo '<ca>' >> /home/vps/public_html/ssl.ovpn
-cat /etc/openvpn/keys/ca.crt >> /home/vps/public_html/ssl.ovpn
-echo '</ca>' >> /home/vps/public_html/ssl.ovpn
-cd /home/vps/public_html/
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/tls-auth.key)
+</tls-auth>
+EOF150
+
+cat <<EOF16> /home/vps/public_html/udp.ovpn
+# Credits to Gakod Memgganas
+client
+dev tun
+proto udp
+setenv FRIENDLY_NAME "I'M MASTA GAKOD"
+remote $MYIP 1194
+resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+comp-lzo
+cipher AES-256-CBC
+auth SHA256
+push "redirect-gateway def1 bypass-dhcp"
+verb 3
+push-peer-info
+ping 10
+ping-restart 60
+hand-window 70
+server-poll-timeout 4
+reneg-sec 2592000
+sndbuf 0
+rcvbuf 0
+remote-cert-tls server
+key-direction 1
+<auth-user-pass>
+sam
+sam
+</auth-user-pass>
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/tls-auth.key)
+</tls-auth>
+EOF16
 
 # Setting UFW
 apt-get install ufw
@@ -179,31 +343,33 @@ echo "/bin/false" >> /etc/shells
 apt-get -y install squid
 cat > /etc/squid/squid.conf <<-END
 acl server dst xxxxxxxxx/32 localhost
-acl checker src 188.93.95.137
-acl ports_ port 14 22 53 21 8080 8081 8000 3128 1193 1194 440 441 442 443 80
+acl SSL_ports port 443
+acl Safe_ports port 80
+acl Safe_ports port 21
+acl Safe_ports port 443
+acl Safe_ports port 70
+acl Safe_ports port 210
+acl Safe_ports port 1025-65535
+acl Safe_ports port 280
+acl Safe_ports port 488
+acl Safe_ports port 591
+acl Safe_ports port 777
+acl CONNECT method CONNECT
+via on
+request_header_access X-Forwarded-For deny all
+request_header_access user-agent  deny all
+reply_header_access X-Forwarded-For deny all
+reply_header_access user-agent  deny all
+http_port 8080
 http_port 3128
 http_port 8000
-http_port 8080
 http_port 8888
-access_log none
-cache_log /dev/null
-logfile_rotate 0
-http_access allow server
-http_access allow checker
-http_access deny all
-forwarded_for off
-via off
-request_header_access Host allow all
-request_header_access Content-Length allow all
-request_header_access Content-Type allow all
-request_header_access All deny all
-hierarchy_stoplist cgi-bin ?
-coredump_dir /var/spool/squid
-refresh_pattern ^ftp: 1440 20% 10080
-refresh_pattern ^gopher: 1440 0% 1440
-refresh_pattern -i (/cgi-bin/|\?) 0 0% 0
-refresh_pattern . 0 20% 4320
-visible_hostname dopekid.tk
+acl all src 0.0.0.0/0
+http_access allow all
+access_log /var/log/squid/access.log
+visible_hostname TD-LTE/FDD-LTE(nb110.cn)
+cache_mgr Welcome_to_use_OpenVPN
+#
 END
 sed -i $MYIP2 /etc/squid/squid.conf;
 service squid restart
