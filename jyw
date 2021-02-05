@@ -91,7 +91,7 @@ service php7.0-fpm restart
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://gakod.com/openvpn.tar"
+wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/gemik/main/aleb/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
@@ -104,7 +104,7 @@ cat <<EOF152> /home/vps/public_html/tcp.ovpn
 client
 dev tun
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
-remote $MYIP 56 tcp
+remote $MYIP 1103 tcp
 http-proxy $MYIP 8080
 route-method exe
 resolv-retry infinite
@@ -151,7 +151,7 @@ client
 dev tun
 proto tcp
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
-remote 127.0.0.1 1103
+remote 127.0.0.1 4444
 route $MYIP 255.255.255.255 net_gateway
 route-method exe
 resolv-retry infinite
