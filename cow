@@ -83,7 +83,7 @@ etc
 rm -rf /var/www/html
 mkdir -p /var/www/html
 # Now creating all of our OpenVPN Configs 
-cat <<EOF152> /var/www/html/GTMConfig.ovpn
+cat <<EOF152> /var/www/html/tcp.ovpn
 # Credits to GakodX
 client
 dev tun
