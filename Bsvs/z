@@ -1,0 +1,112 @@
+apt-get update && apt-get upgrade
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+apt-get install openvpn
+apt-get install curl
+apt-get install apache2
+rm /var/www/html/index.html
+rm /var/www/html/index.nginx-debian.html
+wget https://raw.githubusercontent.com/BangJaguh/cina/main/index.html
+cp index.html /var/www/html
+wget -O /etc/openvpn/openvpn.tar "https://raw.githubusercontent.com/BangJaguh/mulu/main/certi.tar"
+cd /etc/openvpn/
+tar xf openvpn.tar
+wget -O /etc/openvpn/server.conf "https://raw.githubusercontent.com/azalea910512/gemik/main/Bsvs/server.conf"
+wget -O /etc/openvpn/ssl.conf ""
+wget -O /etc/openvpn/udp.conf "https://raw.githubusercontent.com/BangJaguh/cina/main/udp.conf"
+service openvpn restart
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o ens3 -j MASQUERADE
+iptables-save > /etc/iptables_yg_baru_dibikin.conf
+wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/BangJaguh/cina/main/iptables"
+chmod +x /etc/network/if-up.d/iptables
+MYIP=`curl -s ifconfig.me`;
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+service openvpn restart
+wget -O /var/www/html/tcp.ovpn "https://raw.githubusercontent.com/BangJaguh/mulu/main/ssl.conf"
+wget -O /var/www/html/udp.ovpn "https://raw.githubusercontent.com/BangJaguh/mulu/main/client2.conf"
+sed -i $MYIP2 /var/www/html/tcp.ovpn;
+sed -i $MYIP2 /var/www/html/udp.ovpn;
+sudo systemctl start openvpn@server
+service openvpn restart
+# setting port ssh
+sed -i '/#Port 22/a Port 143' /etc/ssh/sshd_config
+sed -i '/#Port 22/a Port  90' /etc/ssh/sshd_config
+sed -i 's/#Port 22/Port  22/g' /etc/ssh/sshd_config
+/etc/init.d/ssh restart
+
+# install dropbear
+apt-get -y install dropbear
+sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 109 -p 110 -p 80"/g' /etc/default/dropbear
+echo "/bin/false" >> /etc/shells
+/etc/init.d/dropbear restart
+
+
+# install stunnel
+apt-get install stunnel4 -y
+cat > /etc/stunnel/stunnel.conf <<-END
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = a:SO_REUSEADDR=1
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+
+[dropbear]
+accept = 443
+connect = 127.0.0.1:442
+
+[openvpn]
+accept = 990
+connect = 127.0.0.1:1102
+
+END
+
+# make a certificate
+openssl genrsa -out key.pem 2048
+openssl req -new -x509 -key key.pem -out cert.pem -days 1095 \
+-subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email"
+cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
+# buat directory badvpn
+cd /usr/bin
+mkdir build
+cd build
+wget https://github.com/ambrop72/badvpn/archive/1.999.130.tar.gz
+tar xvzf 1.999.130.tar.gz
+cd badvpn-1.999.130
+cmake -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_TUN2SOCKS=1 -DBUILD_UDPGW=1
+make install
+make -i install
+
+cd
+# auto start badvpn single port
+sed -i '$ i\screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 10' /etc/rc.local
+screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500 --max-connections-for-client 20 
+
+cd
+# permition
+chmod +x /usr/local/bin/badvpn-udpgw
+chmod +x /usr/local/share/man/man7/badvpn.7
+chmod +x /usr/local/bin/badvpn-tun2socks
+chmod +x /usr/local/share/man/man8/badvpn-tun2socks.8
+chmod +x /usr/bin/build
+chmod +x /etc/rc.local
+
+
+# Instal DDOS Flate
+wget https://github.com/jgmdev/ddos-deflate/archive/master.zip -O ddos.zip
+unzip ddos.zip
+cd ddos-deflate-master
+./install.sh
+
+
+
+wget https://raw.githubusercontent.com/ndndndn/CodesX/main/sq3.sh && bash sq3.sh
+cd /usr/bin
+wget -O add-user "https://raw.githubusercontent.com/BangJaguh/cina/main/add-user.sh"
+echo "0 0 * * * root /sbin/reboot" > /etc/cron.d/reboot
+chmod +x add-user
+clear
+echo DONE INSTALL
