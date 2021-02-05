@@ -1,12 +1,12 @@
 apt-get update && apt-get upgrade
 echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
-apt-get install openvpn
-apt-get install curl
-apt-get install apache2
-rm /var/www/html/index.html
-rm /var/www/html/index.nginx-debian.html
-wget https://raw.githubusercontent.com/BangJaguh/cina/main/index.html
-cp index.html /var/www/html
+apt-get install openvpn -y
+apt-get install curl -y
+apt-get install apache2 -y
+apt -y install nginx
+rm /etc/nginx/sites-enabled/default
+wget -O /etc/nginx/sites-enabled/default "https://raw.githubusercontent.com/azalea910512/kia/main/default"
+systemctl restart nginx
 wget -O /etc/openvpn/openvpn.tar "https://raw.githubusercontent.com/BangJaguh/mulu/main/certi.tar"
 cd /etc/openvpn/
 tar xf openvpn.tar
