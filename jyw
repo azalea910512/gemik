@@ -91,7 +91,7 @@ service php7.0-fpm restart
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/gemik/main/aleb/openvpn.tar"
+wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/kia/main/zvdio/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
@@ -134,10 +134,10 @@ sam
 $(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /etc/openvpn/client.crt)
+$(cat /etc/openvpn/server.crt)
 </cert>
 <key>
-$(cat /etc/openvpn/client.key)
+$(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
@@ -181,10 +181,10 @@ sam
 $(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /etc/openvpn/client.crt)
+$(cat /etc/openvpn/server.crt)
 </cert>
 <key>
-$(cat /etc/openvpn/client.key)
+$(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
@@ -195,30 +195,25 @@ EOF150
 cat <<EOF150> /home/vps/public_html/udp.ovpn
 # Credits to GakodX
 client
-dev tun
 proto udp
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
-remote $MYIP 1109
-route-method exe
+remote $MYIP 1105
+dev tun
 resolv-retry infinite
 nobind
 persist-key
 persist-tun
-comp-lzo
-cipher AES-256-CBC
-auth SHA256
-push "redirect-gateway def1 bypass-dhcp"
-verb 3
-push-peer-info
-ping 10
-ping-restart 60
-hand-window 70
-server-poll-timeout 4
-reneg-sec 2592000
-sndbuf 0
-rcvbuf 0
 remote-cert-tls server
-key-direction 1
+verify-x509-name server_ADBtkp0yL46HLXPb name
+auth SHA256
+auth-nocache
+cipher AES-128-CBC
+tls-client
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+setenv opt block-outside-dns
+verb 3
+auth-user-pass
 <auth-user-pass>
 sam
 sam
@@ -227,10 +222,10 @@ sam
 $(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /etc/openvpn/client.crt)
+$(cat /etc/openvpn/server.crt)
 </cert>
 <key>
-$(cat /etc/openvpn/client.key)
+$(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
