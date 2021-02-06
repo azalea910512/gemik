@@ -1,0 +1,340 @@
+#!/usr/bin/bash
+clear
+
+green='\e[0;32m'
+red='\e[0;31m'
+noclr='\033[0m'
+IPADDR=$(ip -4 addr | sed -ne 's|^.* inet \([^/]*\)/.* scope global.*$|\1|p' | head -1)
+
+timedatectl set-timezone Asia/Kuala_Lumpur
+
+echo -n "Update system and upgrade packages... "
+apt-get -qq update &>/dev/null
+apt-get -y -qq upgrade &>/dev/null
+echo -e "[ ${green}DONE${noclr} ]"
+sleep 3
+
+echo -n "Install required and needed packages... "
+apt-get -y -qq install build-essential &>/dev/null
+apt-get -y -qq install curl python perl git &>/dev/null
+apt-get -y -qq install apt-transport-https &>/dev/null
+apt-get -y -qq install software-properties-common &>/dev/null
+apt-get -qq update &>/dev/null
+apt-get -y -qq upgrade &>/dev/null
+echo -e "[ ${green}DONE${noclr} ]"
+sleep 3 && echo ""
+
+
+
+### dropbear package...
+echo -n "Install and Configure dropbear... "
+touch /etc/cybertizeTOS
+DEBIAN_FRONTEND=noninteractive apt-get -y -qq install dropbear &>/dev/null
+echo 'NO_START=0
+DROPBEAR_PORT=513
+DROPBEAR_EXTRA_ARGS=""
+DROPBEAR_BANNER="/etc/cybertizeTOS"
+DROPBEAR_RSAKEY="/etc/dropbear/dropbear_rsa_host_key"
+DROPBEAR_DSSKEY="/etc/dropbear/dropbear_dss_host_key"
+DROPBEAR_ECDSAKEY="/etc/dropbear/dropbear_ecdsa_host_key"
+DROPBEAR_RECEIVE_WINDOW=65536' > /etc/default/dropbear
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+apt-get update
+
+# install webserver
+apt-get -y install nginx
+
+# install essential package
+apt-get -y install nano iptables-persistent dnsutils screen whois ngrep unzip unrar
+
+# install webserver
+cd
+rm /etc/nginx/sites-enabled/default
+rm /etc/nginx/sites-available/default
+wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/janda09/install/master/nginx.conf"
+mkdir -p /home/vps/public_html
+echo "<pre>Setup by JandaBaper</pre>" > /home/vps/public_html/index.html
+wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/janda09/install/master/vps.conf"
+
+
+### openvpn package...
+echo -n "Install and Configure openvpn... ";
+apt-get -y -qq install easy-rsa openvpn &>/dev/null
+cp -r /usr/share/easy-rsa /etc/openvpn/
+cd /etc/openvpn/easy-rsa
+./easyrsa --batch init-pki &>/dev/null
+./easyrsa --batch build-ca nopass &>/dev/null
+./easyrsa --batch gen-dh &>/dev/null
+./easyrsa --batch build-server-full server nopass &>/dev/null
+./easyrsa --batch build-client-full client nopass &>/dev/null
+
+echo '# CYBERTIZE OVPN SERVER CONFIG
+# ----------------------------
+dev tun
+proto tcp
+port 989
+persist-key
+persist-tun
+tun-mtu 1500
+tun-mtu-extra 32
+mssfix 1460
+user nobody
+group nogroup
+keepalive 10 120
+cipher AES-256-CBC
+comp-lzo
+verb 3
+
+ca /etc/openvpn/easy-rsa/pki/ca.crt
+cert /etc/openvpn/easy-rsa/pki/issued/server.crt
+key /etc/openvpn/easy-rsa/pki/private/server.key
+dh /etc/openvpn/easy-rsa/pki/dh.pem
+
+plugin /usr/share/openvpn/plugin/lib/openvpn-auth-pam.so login
+client-cert-not-required
+username-as-common-name
+server 10.8.0.0 255.255.255.0
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 1.1.1.1"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+push "route-method exe"
+push "route-delay 2"
+status /var/log/openvpn/ovpn-stat.log
+ifconfig-pool-persist ovpn-ipp.txt
+log /var/log/openvpn/ovpn-auth.log' > /etc/openvpn/server.conf
+
+echo '# CYBERTIZE OVPN CLIENT CONFIG
+# ----------------------------
+client
+dev tun
+proto tcp
+remote IPADDRESS 989
+keepalive 10 120
+remote-cert-tls server
+cipher AES-256-CBC
+auth-user-pass
+comp-lzo
+
+;http-proxy-retry
+;http-proxy IPADDRESS 80
+;http-proxy-option CUSTOM-HEADER Protocol HTTP/1.1
+;http-proxy-option CUSTOM-HEADER Host BUGHOST
+;http-proxy-option CUSTOM-HEADER X-Online-Host BUGHOST
+;http-proxy-option CUSTOM-HEADER Via HOSTNAME:PORT' > /etc/openvpn/client.ovpn
+
+
+echo '' >> /etc/openvpn/client.ovpn
+sed -i $MYIP2 /etc/openvpn/client.ovpn;
+echo '<ca>' >> /etc/openvpn/client.ovpn
+cat /etc/openvpn/easy-rsa/pki/ca.crt >> /etc/openvpn/client.ovpn
+echo '</ca>' >> /etc/openvpn/client.ovpn
+cp client.ovpn /home/vps/public_html/
+
+mkdir /usr/share/openvpn/plugin && mkdir /usr/share/openvpn/plugin/lib
+cp /usr/lib/x86_64-linux-gnu/openvpn/plugins/openvpn-plugin-auth-pam.so /usr/share/openvpn/plugin/lib/openvpn-auth-pam.so
+sed -i "s/IPADDRESS/$IPADDR/g" /etc/openvpn/client.ovpn
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+
+### stunnel4 package
+echo -n "Install and Configure stunnel... "
+apt-get -y -qq install stunnel4 &>/dev/null
+openssl req -new -x509 -days 365 -nodes \
+-subj '/C=MY/ST=Sabah/L=Tawau/O="Cybertize Dev"/OU="Stunnel Services"/CN=cybertize' \
+-out /etc/stunnel/stunnel.pem -keyout /etc/stunnel/stunnel.pem &>/dev/null
+echo 'pid = /var/run/stunnel4.pid
+debug = 4
+output = /var/log/stunnel4/stunnel.log
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+
+[dropbear]
+accept = 443
+connect = 127.0.0.1:513
+
+[openvpn]
+accept = 990
+connect = 127.0.0.1:989' > /etc/stunnel/stunnel.conf
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+
+### squid3 package...
+echo -n "Install and Configure squid... "
+apt-get -y -qq install squid &>/dev/null
+echo '# CYBERTIZE SQUID CONFIG
+# ----------------------------
+acl localnet src 10.0.0.0/8
+acl localnet src 172.16.0.0/12
+acl localnet src 192.168.0.0/16
+
+acl SSL_ports port 443
+acl Safe_ports port 80
+acl Safe_ports port 21
+acl Safe_ports port 443
+acl Safe_ports port 70
+acl Safe_ports port 210
+acl Safe_ports port 1025-65535
+acl Safe_ports port 280
+acl Safe_ports port 488
+acl Safe_ports port 591
+acl Safe_ports port 777
+acl CONNECT method CONNECT
+acl cybertize dst IPADDRESS/24
+
+http_access allow cybertize
+http_access allow localnet
+http_access allow localhost
+http_access allow manager localhost
+http_access deny manager
+http_access deny all
+
+http_port 80
+http_port 8080
+
+cache deny all
+access_log none
+cache_store_log none
+cache_log /dev/null
+hierarchy_stoplist cgi-bin ?
+
+refresh_pattern ^ftp: 1440 20%	10080
+refresh_pattern ^gopher: 1440 0% 1440
+refresh_pattern -i (/cgi-bin/|\?) 0	0% 0
+refresh_pattern . 0	20%	4320
+visible_hostname cybertize.tk' > /etc/squid/squid.conf
+sed -i "s/IPADDRESS/$IPADDR/g" /etc/squid/squid.conf
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+
+### badvpn package
+echo -n "Install and Configure badvpn... ";
+wget -O /usr/sbin/badvpn-udpgw "https://github.com/cybertize-dev/Packages/raw/master/badvpn-udpgw64" &>/dev/null
+chmod +x /usr/sbin/badvpn-udpgw
+echo '@reboot /usr/sbin/badvpn-udpgw --listen-addr 127.0.0.1:7300' >> /etc/crontab
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+
+echo '# Reconfigure sysctl.conf by Doctype...
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv4.ip_forward=1
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr' > /etc/sysctl.conf
+sysctl -p &>/dev/null
+
+### fail2ban package...
+echo -n "Install and Configure fail2ban... "
+apt-get -y -qq install fail2ban &>/dev/null
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3
+
+### iptables package...
+echo -n "Install and Configure iptables... "
+echo '*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A POSTROUTING -o eth0 -j MASQUERADE
+-A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+COMMIT
+
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+
+-A INPUT -i lo -j ACCEPT
+-A OUTPUT -o lo -j ACCEPT
+-A INPUT -i eth0 -j ACCEPT
+-A OUTPUT -o eth0 -j ACCEPT
+
+-A INPUT -m string --string "BitTorrent" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "BitTorrent protocol" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "peer_id=" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string ".torrent" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "announce.php?passkey=" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "torrent" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "announce" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "info_hash" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "get_peers" --algo bm --to 65535 -j DROP
+-A INPUT -m string --string "find_node" --algo bm --to 65535 -j DROP
+
+-A INPUT -p tcp --dport 22 -m limit --limit 6/minute --limit-burst 18 -j ACCEPT
+-A INPUT -p udp --dport 22 -m limit --limit 6/minute --limit-burst 18 -j ACCEPT
+-A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+-A INPUT -i eth0 -p tcp -m multiport --dports 80,8080 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A OUTPUT -o eth0 -p tcp -m multiport --sports 80,8080 -m state --state ESTABLISHED -j ACCEPT
+-A INPUT -i eth0 -p tcp -m multiport --dports 443,513 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A OUTPUT -o eth0 -p tcp -m multiport --sports 443,513 -m state --state ESTABLISHED -j ACCEPT
+-A INPUT -i eth0 -p tcp -m multiport --dports 989,990 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A OUTPUT -o eth0 -p tcp -m multiport --sports 989,990 -m state --state ESTABLISHED -j ACCEPT
+-A INPUT -i eth0 -p tcp --dport 7300 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A OUTPUT -o eth0 -p tcp --sport 7300 -m state --state ESTABLISHED -j ACCEPT
+COMMIT
+
+*mangle
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+
+-A PREROUTING -m conntrack --ctstate INVALID -j DROP
+COMMIT' > /etc/iptables.all.rules
+
+iptables-restore /etc/iptables.all.rules
+echo '@reboot iptables-restore /etc/iptables.all.rules' >> /etc/crontab
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3 && echo ""
+
+### menu function
+echo -n "Download and Enable menu functions... "
+wget -O /usr/local/bin/menu "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/menu" &>/dev/null
+wget -O /usr/local/bin/trial "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/trial" &>/dev/null
+wget -O /usr/local/bin/create "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/create" &>/dev/null
+wget -O /usr/local/bin/login "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/login" &>/dev/null
+wget -O /usr/local/bin/lists "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/lists" &>/dev/null
+wget -O /usr/local/bin/active "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/active" &>/dev/null
+wget -O /usr/local/bin/password "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/password" &>/dev/null
+wget -O /usr/local/bin/lock "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/lock" &>/dev/null
+wget -O /usr/local/bin/unlock "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/unlock" &>/dev/null
+wget -O /usr/local/bin/delete "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/delete" &>/dev/null
+
+wget -O /usr/local/bin/benchmark "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/benchmark" &>/dev/null
+wget -O /usr/local/bin/speedtest "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/server/speedtest" &>/dev/null
+wget -O /usr/local/bin/ram "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/server/ram" &>/dev/null
+wget -O /usr/local/bin/detail "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/detail" &>/dev/null
+wget -O /usr/local/bin/reboot "https://raw.githubusercontent.com/cybertize-dev/Debian-10/main/scripts/server/reboot" &>/dev/null
+
+chmod +x /usr/local/bin/*
+echo -e "[ ${green}OK${noclr} ]"
+sleep 3 && echo ""
+
+echo "============================"
+echo "Butiran... "
+echo "----------------------------"
+echo "Openssh: 22"
+echo "Dropbear: 513 | 443 TLS"
+echo "Openvpn: 989 | 990 TLS"
+echo "Squid: 80 & 8080"
+echo "Badvpn: 7300"
+
+echo "DDoS Protection: Active"
+echo "Torrent Protection: Active"
+echo "Brute Force Protection: Active"
+echo "============================"
+echo ""
+echo "You need [reboot] server to complete this setup."
+read -p 'Do you want to reboot server now [Yy]? ' CHOOSE
+if ! [[ "$CHOOSE" == "y" || "$CHOOSE" == "Y" ]] ; then
+  exit 1
+else
+  echo 'Server will reboot in a second...'
+  sleep 3
+  reboot
+fi
