@@ -105,27 +105,8 @@ status /var/log/openvpn/ovpn-stat.log
 ifconfig-pool-persist ovpn-ipp.txt
 log /var/log/openvpn/ovpn-auth.log' > /etc/openvpn/server.conf
 
-echo '# CYBERTIZE OVPN CLIENT CONFIG
-# ----------------------------
-client
-dev tun
-proto tcp
-remote IPADDRESS 989
-keepalive 10 120
-remote-cert-tls server
-cipher AES-256-CBC
-auth-user-pass
-comp-lzo
-
-;http-proxy-retry
-;http-proxy IPADDRESS 80
-;http-proxy-option CUSTOM-HEADER Protocol HTTP/1.1
-;http-proxy-option CUSTOM-HEADER Host BUGHOST
-;http-proxy-option CUSTOM-HEADER X-Online-Host BUGHOST
-;http-proxy-option CUSTOM-HEADER Via HOSTNAME:PORT' > /etc/openvpn/client.ovpn
-
-
-echo '' >> /etc/openvpn/client.ovpn
+# openvpn config
+wget -O /etc/openvpn/client.ovpn "https://raw.githubusercontent.com/ara-rangers/vps/master/client.conf"
 sed -i $MYIP2 /etc/openvpn/client.ovpn;
 echo '<ca>' >> /etc/openvpn/client.ovpn
 cat /etc/openvpn/easy-rsa/pki/ca.crt >> /etc/openvpn/client.ovpn
