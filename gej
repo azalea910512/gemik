@@ -903,9 +903,8 @@ client
 proto tcp-client
 dev tun
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
-remote 127.0.0.1 443
+remote 127.0.0.1 $OpenVPN_TCP_Port
 route $IPADDR 255.255.255.255 net_gateway 
-http-proxy $IPADDR 8080
 http-proxy-retry
 resolv-retry infinite
 route-method exe
@@ -948,7 +947,7 @@ EOF17
 # Setting UFW
 apt-get install ufw
 ufw allow ssh
-ufw allow 443/tcp
+ufw allow 1103/tcp
 sed -i 's|DEFAULT_INPUT_POLICY="DROP"|DEFAULT_INPUT_POLICY="ACCEPT"|' /etc/default/ufw
 sed -i 's|DEFAULT_FORWARD_POLICY="DROP"|DEFAULT_FORWARD_POLICY="ACCEPT"|' /etc/default/ufw
 cat > /etc/ufw/before.rules <<-END
