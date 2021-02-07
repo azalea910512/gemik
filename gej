@@ -179,23 +179,6 @@ MyDropbear
  systemctl restart dropbear
 }
 
-function InsStunnel(){
- StunnelDir=$(ls /etc/default | grep stunnel | head -n1)
-
- # Creating stunnel startup config using cat eof tricks
-cat <<'MyStunnelD' > /etc/default/$StunnelDir
-# My Stunnel Config
-ENABLED=1
-FILES="/etc/stunnel/*.conf"
-OPTIONS=""
-BANNER="/etc/banner"
-PPP_RESTART=0
-# RLIMITS="-n 4096 -d unlimited"
-RLIMITS=""
-MyStunnelD
-
-}
-
 function InsOpenVPN(){
  # Checking if openvpn folder is accidentally deleted or purged
  if [[ ! -e /etc/openvpn ]]; then
