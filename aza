@@ -1046,10 +1046,6 @@ FordServ
  systemctl enable cron
  
 }
- #Create Admin
- useradd -m admin
- echo "admin:itangsagli" | chpasswd
-
 function ConfMenu(){
 echo -e " Creating Menu scripts.."
 
