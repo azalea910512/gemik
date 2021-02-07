@@ -35,6 +35,12 @@ Dropbear_Port2='442'
 Stunnel_Port1='443' # through Dropbear
 Stunnel_Port2='440' # through OpenSSH
 
+# Squid Ports
+Squid_Port1='3128'
+Squid_Port2='8080'
+Squid_Port3='8888'
+
+
 # OpenVPN Ports
 OpenVPN_Port1='110'
 OpenVPN_Port2='1194' # take note when you change this port, openvpn sun noload config will not work
