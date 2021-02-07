@@ -94,7 +94,6 @@ function InstWebmin(){
  
  # Then restart to take effect
  systemctl restart webmin
-}
 
  # Now we'll put our ssh ports inside of sshd_config
  sed -i '/#Port 22/a Port 143' /etc/ssh/sshd_config
