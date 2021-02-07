@@ -5,7 +5,6 @@
 #############################
 # Variables (Can be changed depends on your preferred values)
 # Script name
-MyScriptName='SigulaDev-Premium Script'
 
 # OpenSSH Ports
 SSH_Port1='22'
@@ -1016,39 +1015,6 @@ EOFSH
  # Setting server local time every time this machine reboots
  sed -i "s|MyVPS_Time|$MyVPS_Time|g" /etc/Sigula/startup.sh
 
- # 
- rm -rf /etc/sysctl.d/99*
-
- # Setting our startup script to run every machine boots 
- cat <<'FordServ' > /etc/systemd/system/Sigula.service
-[Unit]
-Description=Sigula Startup Script
-Before=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash /etc/Sigula/startup.sh
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-FordServ
- chmod +x /etc/systemd/system/Sigula.service
- systemctl daemon-reload
- systemctl start Sigula
- systemctl enable Sigula &> /dev/null
- systemctl enable fail2ban &> /dev/null
- systemctl start fail2ban &> /dev/null
-
- # Rebooting cron service
- systemctl restart cron
- systemctl enable cron
- 
-}
-function ConfMenu(){
-echo -e " Creating Menu scripts.."
-
 cd /usr/local/sbin/
 rm -rf {accounts,base-ports,base-ports-wc,base-script,bench-network,clearcache,connections,create,create_random,create_trial,delete_expired,diagnose,edit_dropbear,edit_openssh,edit_openvpn,edit_ports,edit_squid3,edit_stunnel4,locked_list,menu,options,ram,reboot_sys,reboot_sys_auto,restart_services,server,set_multilogin_autokill,set_multilogin_autokill_lib,show_ports,speedtest,user_delete,user_details,user_details_lib,user_extend,user_list,user_lock,user_unlock}
 wget -q 'https://github.com/raziman869/AutoScriptDB/raw/master/Files/Menu/bashmenu.zip'
@@ -1059,10 +1025,7 @@ dos2unix ./* &> /dev/null
 sed -i 's|/etc/squid/squid.conf|/etc/privoxy/config|g' ./*
 sed -i 's|http_port|listen-address|g' ./*
 cd ~
-}
 
-function ScriptMessage(){
- echo -e " [\e[1;32m$MyScriptName VPS Installer\e[0m]"
  echo -e ""
  echo -e " t.me/Gakod"
  echo -e " [PAYPAL] GakodXGaming@gmail.com"
