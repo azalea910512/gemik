@@ -637,19 +637,37 @@ jrZFH4tMHWZ+mBTRA/76xsbBGWtkxND932g1vAc281EHv9+4iyW1SdvUTJNzZObh
 EOF103
 
  # Getting all dns inside resolv.conf then use as Default DNS for our openvpn server
- #grep -v '#' /etc/resolv.conf | grep 'nameserver' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | while read -r line; do
-	#echo "push \"dhcp-option DNS $line\"" >> /etc/openvpn/server_tcp.conf
-#done
- #grep -v '#' /etc/resolv.conf | grep 'nameserver' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | while read -r line; do
-	#echo "push \"dhcp-option DNS $line\"" >> /etc/openvpn/server_udp.conf
-#done
+ grep -v '#' /etc/resolv.conf | grep 'nameserver' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | while read -r line; do
+	echo "push \"dhcp-option DNS $line\"" >> /etc/openvpn/server_tcp.conf
+done
+
+ # Creating a New update message in server.conf
+ cat <<'NUovpn' > /etc/openvpn/server.conf
+ # New Update are now released, OpenVPN Server
+ # are now running both TCP and UDP Protocol. (Both are only running on IPv4)
+ # But our native server.conf are now removed and divided
+ # Into two different configs base on their Protocols:
+ #  * OpenVPN TCP (located at /etc/openvpn/server_tcp.conf
+ #  * OpenVPN UDP (located at /etc/openvpn/server_udp.conf
+ # 
+ # Also other logging files like
+ # status logs and server logs
+ # are moved into new different file names:
+ #  * OpenVPN TCP Server logs (/etc/openvpn/tcp.log)
+ #  * OpenVPN UDP Server logs (/etc/openvpn/udp.log)
+ #  * OpenVPN TCP Status logs (/etc/openvpn/tcp_stats.log)
+ #  * OpenVPN UDP Status logs (/etc/openvpn/udp_stats.log)
+ #
+ # Server ports are configured base on env vars
+ # executed/raised from this script (OpenVPN_TCP_Port/OpenVPN_UDP_Port)
+ #
+ # Enjoy the new update
+ # Script Updated by SigulaDev
+NUovpn
 
  # setting openvpn server port
- sed -i "s|MyOvpnPort1|$OpenVPN_Port1|g" /etc/openvpn/server_tcp.conf
- sed -i "s|MyOvpnPort2|$OpenVPN_Port2|g" /etc/openvpn/server_udp.conf
- 
- # Generating openvpn dh.pem file using openssl
- #openssl dhparam -out /etc/openvpn/dh.pem 1024
+ sed -i "s|OVPNTCP|$OpenVPN_TCP_Port|g" /etc/openvpn/server_tcp.conf
+ sed -i "s|OVPNUDP|$OpenVPN_UDP_Port|g" /etc/openvpn/server_udp.conf
  
  # Getting some OpenVPN plugins for unix authentication
  wget -qO /etc/openvpn/b.zip 'https://raw.githubusercontent.com/GakodArmy/teli/main/openvpn_plugin64'
@@ -662,56 +680,42 @@ EOF103
  systemctl daemon-reload
 fi
 
- # Allow IPv4 Forwarding
- echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/20-openvpn.conf && sysctl --system &> /dev/null && echo 1 > /proc/sys/net/ipv4/ip_forward
+ echo ipv4 >> /etc/modules
+ echo ipv6 >> /etc/modules
+ sysctl -w net.ipv4.ip_forward=1
+ sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+ sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf
+ sysctl -p
+ clear
 
- # Iptables Rule for OpenVPN server
- #PUBLIC_INET="$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)"
- #IPCIDR='10.200.0.0/16'
- #iptables -I FORWARD -s $IPCIDR -j ACCEPT
- #iptables -t nat -A POSTROUTING -o $PUBLIC_INET -j MASQUERADE
- #iptables -t nat -A POSTROUTING -s $IPCIDR -o $PUBLIC_INET -j MASQUERADE
- 
- # Installing Firewalld
- apt install firewalld -y
- systemctl start firewalld
- systemctl enable firewalld
- firewall-cmd --quiet --set-default-zone=public
- firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/tcp
- firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/udp
- firewall-cmd --quiet --reload
- firewall-cmd --quiet --add-masquerade
- firewall-cmd --quiet --permanent --add-masquerade
- firewall-cmd --quiet --permanent --add-service=ssh
- firewall-cmd --quiet --permanent --add-service=openvpn
- firewall-cmd --quiet --permanent --add-service=http
- firewall-cmd --quiet --permanent --add-service=https
- firewall-cmd --quiet --permanent --add-service=privoxy
- firewall-cmd --quiet --permanent --add-service=squid
- firewall-cmd --quiet --reload
- 
- # Enabling IPv4 Forwarding
- echo 1 > /proc/sys/net/ipv4/ip_forward
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+iptables-save > /etc/iptables.up.rules
+wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/ara-rangers/vps/master/iptables"
+chmod +x /etc/network/if-up.d/iptables
+sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn@.service
+systemctl daemon-reload
+/etc/init.d/openvpn restart
+wget -qO /etc/openvpn/openvpn.bash "https://raw.githubusercontent.com/sumailranger93/sumail/main/openvpn.bash"
+chmod +x /etc/openvpn/openvpn.bash
+bash /etc/openvpn/openvpn.bash
  
  # Starting OpenVPN server
  systemctl start openvpn@server_tcp
- systemctl start openvpn@server_udp
  systemctl enable openvpn@server_tcp
+ systemctl start openvpn@server_udp
  systemctl enable openvpn@server_udp
- systemctl restart openvpn@server_tcp
- systemctl restart openvpn@server_udp
- 
- # Pulling OpenVPN no internet fixer script
- #wget -qO /etc/openvpn/openvpn.bash "https://raw.githubusercontent.com/Bonveio/BonvScripts/master/openvpn.bash"
- #0chmod +x /etc/openvpn/openvpn.bash
-}
 
+}
 function InsProxy(){
+
  # Removing Duplicate privoxy config
  rm -rf /etc/privoxy/config*
  
  # Creating Privoxy server config using cat eof tricks
- cat <<'myPrivoxy' > /etc/privoxy/config
+ cat <<'privoxy' > /etc/privoxy/config
 # My Privoxy Server Config
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
@@ -735,7 +739,7 @@ keep-alive-timeout 5
 tolerate-pipelining 1
 socket-timeout 300
 permit-access 0.0.0.0/0 IP-ADDRESS
-myPrivoxy
+privoxy
 
  # Setting machine's IP Address inside of our privoxy config(security that only allows this machine to use this proxy server)
  sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/privoxy/config
@@ -744,18 +748,27 @@ myPrivoxy
  sed -i "s|Privoxy_Port1|$Privoxy_Port1|g" /etc/privoxy/config
  sed -i "s|Privoxy_Port2|$Privoxy_Port2|g" /etc/privoxy/config
 
- # I'm setting Some Squid workarounds to prevent Privoxy's overflowing file descriptors that causing 50X error when clients trying to connect to your proxy server(thanks for this trick @homer_simpsons)
- apt remove --purge squid -y
- rm -rf /etc/squid/sq*
- apt install squid -y
+ # Removing Duplicate Squid config
+ rm -rf /etc/squid/squid.con*
  
-# Squid Ports (must be 1024 or higher)
- Proxy_Port='8000'
- cat <<mySquid > /etc/squid/squid.conf
-acl VPN dst $(wget -4qO- http://ipinfo.io/ip)/32
+ # Creating Squid server config using cat eof tricks
+ cat <<'mySquid' > /etc/squid/squid.conf
+# My Squid Proxy Server Config
+acl VPN dst IP-ADDRESS/32
 http_access allow VPN
 http_access deny all 
-http_port 0.0.0.0:$Proxy_Port
+http_port 0.0.0.0:Squid_Port1
+http_port 0.0.0.0:Squid_Port2
+http_port 0.0.0.0:Squid_Port3
+### Allow Headers
+acl all src 0.0.0.0/0
+http_access allow all
+forwarded_for off
+via off
+request_header_access Host allow all
+request_header_access Content-Length allow all
+request_header_access Content-Type allow all
+request_header_access All deny all
 coredump_dir /var/spool/squid
 dns_nameservers 1.1.1.1 1.0.0.1
 refresh_pattern ^ftp: 1440 20% 10080
@@ -765,17 +778,22 @@ refresh_pattern . 0 20% 4320
 visible_hostname localhost
 mySquid
 
- sed -i "s|SquidCacheHelper|$Privoxy_Port1|g" /etc/squid/squid.conf
+ # Setting machine's IP Address inside of our Squid config(security that only allows this machine to use this proxy server)
+ sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/squid/squid.conf
+ 
+ # Setting squid ports
+ sed -i "s|Squid_Port1|$Squid_Port1|g" /etc/squid/squid.conf
+ sed -i "s|Squid_Port2|$Squid_Port2|g" /etc/squid/squid.conf
+ sed -i "s|Squid_Port3|$Squid_Port3|g" /etc/squid/squid.conf
 
  # Starting Proxy server
- echo -e "Restarting proxy server.."
- systemctl restart privoxy
+ echo -e "Restarting proxy server..."
  systemctl restart squid
 }
 
 function OvpnConfigs(){
  # Creating nginx config for our ovpn config downloads webserver
- cat <<'myNginxC' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
+ cat <<'myNginxC' > /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
 # My OpenVPN Config Download Directory
 server {
  listen 0.0.0.0:myNginx;
@@ -786,7 +804,7 @@ server {
 myNginxC
 
  # Setting our nginx config port for .ovpn download site
- sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/bonveio-ovpn-config.conf
+ sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
 
  # Removing Default nginx page(port 80)
  rm -rf /etc/nginx/sites-*
@@ -804,7 +822,7 @@ client
 dev tun
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote $IPADDR $OpenVPN_Port1 tcp
-http-proxy $IPADDR Proxy_Port
+http-proxy $IPADDR $Squid_Port1
 http-proxy-retry
 resolv-retry infinite
 route-method exe
@@ -896,8 +914,7 @@ proto tcp-client
 dev tun
 setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote 127.0.0.1 $OpenVPN_Port1
-route $IPADDR 255.255.255.255 net_gateway 
-http-proxy $IPADDR 8080
+route $IPADDR 255.255.255.255 net_gateway
 http-proxy-retry
 resolv-retry infinite
 route-method exe
@@ -940,9 +957,45 @@ EOF17
 # Setting UFW
 apt-get install ufw
 ufw allow ssh
-ufw allow 110/tcp
+ufw allow 443/tcp
 sed -i 's|DEFAULT_INPUT_POLICY="DROP"|DEFAULT_INPUT_POLICY="ACCEPT"|' /etc/default/ufw
 sed -i 's|DEFAULT_FORWARD_POLICY="DROP"|DEFAULT_FORWARD_POLICY="ACCEPT"|' /etc/default/ufw
+cat > /etc/ufw/before.rules <<-END
+# START OPENVPN RULES
+# NAT table rules
+*nat
+:POSTROUTING ACCEPT [0:0]
+# Allow traffic from OpenVPN client to eth0
+-A POSTROUTING -s 10.8.0.0/8 -o eth0 -j MASQUERADE
+COMMIT
+# END OPENVPN RULES
+END
+ufw status
+ufw disable
+
+# OpenVPN monitoring
+apt-get install -y gcc libgeoip-dev python-virtualenv python-dev geoip-database-extra uwsgi uwsgi-plugin-python
+wget -O /srv/openvpn-monitor.tar "https://raw.githubusercontent.com/gatotx/AutoScriptDebian9/main/Res/Panel/openvpn-monitor.tar"
+cd /srv
+tar xf openvpn-monitor.tar
+cd openvpn-monitor
+virtualenv .
+. bin/activate
+pip install -r requirements.txt
+wget -O /etc/uwsgi/apps-available/openvpn-monitor.ini "https://raw.githubusercontent.com/gatotx/AutoScriptDebian9/main/Res/Panel/openvpn-monitor.ini"
+ln -s /etc/uwsgi/apps-available/openvpn-monitor.ini /etc/uwsgi/apps-enabled
+
+#Shadowsocks
+wget -N --no-check-certificate -c -t3 -T60 -O ss-plugins.sh https://git.io/fjlbl
+chmod +x ss-plugins.sh
+
+#v2ray
+source <(curl -sL https://multi.netlify.com/v2ray.sh) --zh
+
+#obfs proxy
+wget -O /etc/openvpn/ "https://raw.githubusercontent.com/HRomie/obfs4proxy-openvpn/master/obfs4proxy-openvpn"
+chmod +x /etc/openvn/obfs4proxy-openvpn
+
 
  # Creating OVPN download site index.html
 cat <<'mySiteOvpn' > /var/www/openvpn/index.html
