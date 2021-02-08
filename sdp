@@ -282,15 +282,15 @@ sleep 2
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://gakod.com/AUTOVPS/openvpn.tar"
+wget -O openvpn.tar "https://gakod.com/all/AUTOVPS/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
 # etc
-wget -O /home/vps/public_html/client.ovpn "https://gakod.com/AUTOVPS/client.ovpn"
-wget -O /home/vps/public_html/udp.ovpn "https://gakod.com/AUTOVPS/udp.ovpn"
+wget -O /home/vps/public_html/client.ovpn "https://gakod.com/all/AUTOVPS/client.ovpn"
+wget -O /home/vps/public_html/udp.ovpn "https://gakod.com/all/AUTOVPS/udp.ovpn"
 wget -O /home/vps/public_html/client1.ovpn "https://raw.githubusercontent.com/BangJaguh/VPN/main/c/client1.ovpn"
-wget -O /home/vps/public_html/client3.ovpn "https://gakod.com/debian/client3.ovpn"
+wget -O /home/vps/public_html/client3.ovpn "https://gakod.com/all/debian/client3.ovpn"
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
 sed -i "s/ipserver/$myip/g" /home/vps/public_html/client.ovpn
 sed -i "s/ipserver/$myip/g" /home/vps/public_html/udp.ovpn
