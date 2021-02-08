@@ -1,5 +1,5 @@
 #!/bin/bash
-echo -e "\e[40;38;5;22m " 
+echo -e "\e[40;38;5;142m " 
 
 # initializing var
 export DEBIAN_FRONTEND=noninteractive
