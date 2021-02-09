@@ -110,20 +110,18 @@ service php7.0-fpm restart
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://raw.githubusercontent.com/thekakw/jubake/main/Bsbsk/openvpn.tar"
+wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/GAKOD/main/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
 # etc
-wget -O /home/vps/public_html/client.ovpn "https://raw.githubusercontent.com/bengali89/Haruhara/main/joie8383/client.ovpn"
-wget -O /home/vps/public_html/udp.ovpn "https://raw.githubusercontent.com/bengali89/Haruhara/main/joie8383/udp.ovpn"
-wget -O /home/vps/public_html/ovpnssl.ovpn "https://raw.githubusercontent.com/bengali89/Haruhara/main/joie8383/ovpnssl.ovpn"
-wget -O /home/vps/public_html/client3.ovpn "https://gakod.com/debian/client3.ovpn"
+wget -O /home/vps/public_html/client.ovpn "https://raw.githubusercontent.com/azalea910512/GAKOD/main/tcp.ovpn"
+wget -O /home/vps/public_html/udp.ovpn "https://raw.githubusercontent.com/azalea910512/GAKOD/main/udp.ovpn"
+wget -O /home/vps/public_html/ovpnssl.ovpn "https://raw.githubusercontent.com/azalea910512/GAKOD/main/ssl.ovpn"
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
 sed -i "s/ipserver/$myip/g" /home/vps/public_html/client.ovpn
 sed -i "s/ipserver/$myip/g" /home/vps/public_html/udp.ovpn
-sed -i "s/ipserver/$myip/g" /home/vps/public_html/client1.ovpn
-sed -i "s/ipserver/$myip/g" /home/vps/public_html/client3.ovpn
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/ssl.ovpn
 useradd -m -g users -s /bin/bash archangels
 echo "7C22C4ED" | chpasswd
 echo "UPDATE DAN INSTALL SIAP 99% MOHON SABAR"
