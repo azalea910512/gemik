@@ -610,8 +610,8 @@ client
 dev tun
 proto tcp
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN Proxy"
-remote $IPADDR $OpenVPN_TCP_Port
-http-proxy $IPADDR $Squid_Port2
+remote $MYIP $OpenVPN_TCP_Port
+http-proxy $MYIP $Squid_Port2
 http-proxy-retry
 resolv-retry infinite
 route-method exe
@@ -658,7 +658,7 @@ client
 dev tun
 proto tcp
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN Proxy 2"
-remote $IPADDR $OpenVPN_TCP_Port
+remote $MYIP $OpenVPN_TCP_Port
 remote-cert-tls server
 connect-retry infinite
 resolv-retry infinite
@@ -700,7 +700,7 @@ client
 dev tun
 proto udp
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN UDP"
-remote $IPADDR $OpenVPN_UDP_Port
+remote $MYIP $OpenVPN_UDP_Port
 remote-cert-tls server
 resolv-retry infinite
 float
@@ -742,7 +742,7 @@ proto tcp-client
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN TCP"
 dev tun
 remote 127.0.0.1 $OpenVPN_TCP_Port
-route $IPADDR 255.255.255.255 net_gateway
+route $MYIP 255.255.255.255 net_gateway
 remote-cert-tls server
 bind
 float
@@ -785,7 +785,7 @@ client
 dev tun
 proto tcp-client
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN Proxy"
-remote $IPADDR $OpenVPN_TCP_Port
+remote $MYIP $OpenVPN_TCP_Port
 nobind
 persist-key
 persist-tun
@@ -830,7 +830,7 @@ client
 dev tun
 proto tcp-client
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN Proxy"
-remote $IPADDR $OpenVPN_TCP_Port
+remote $MYIP $OpenVPN_TCP_Port
 nobind
 persist-key
 persist-tun
@@ -875,7 +875,7 @@ client
 dev tun
 proto tcp-client
 setenv FRIENDLY_NAME "Mac Quan Inc - VPN"
-remote $IPADDR $OpenVPN_TCP_Port
+remote $MYIP $OpenVPN_TCP_Port
 nobind
 persist-key
 persist-tun
@@ -954,16 +954,31 @@ sed -i "s|HAYUK|$MYIP|g" /var/www/openvpn/index.html
 # Restarting nginx service
 systemctl restart nginx
  
- # Creating all .ovpn config archives
-# Kuota Maxstream Tsel
-cd /var/www/openvpn
-wget https://raw.githubusercontent.com/fisabiliyusri/Betatest/master/SL-Maxstream.ehi
-# Kuota Whatsapp/Kemdikbud Tsel
-cd /var/www/openvpn
-wget https://raw.githubusercontent.com/fisabiliyusri/Betatest/master/SL-Wa-Kemdikbud.ehi
-# Kuota Youtube Tsel
-cd /var/www/openvpn
-wget https://raw.githubusercontent.com/fisabiliyusri/Betatest/master/SL-YoutubeTsel.ehi
+# script
+wget -O /usr/local/bin/menu "https://raw.githubusercontent.com/ara-rangers/vps/master/menu"
+wget -O /usr/local/bin/m "https://raw.githubusercontent.com/ara-rangers/vps/master/menu"
+wget -O /usr/local/bin/autokill "https://raw.githubusercontent.com/ara-rangers/vps/master/autokill"
+wget -O /usr/local/bin/user-generate "https://raw.githubusercontent.com/ara-rangers/vps/master/user-generate"
+wget -O /usr/local/bin/speedtest "https://raw.githubusercontent.com/ara-rangers/vps/master/speedtest"
+wget -O /usr/local/bin/user-lock "https://raw.githubusercontent.com/ara-rangers/vps/master/user-lock"
+wget -O /usr/local/bin/user-unlock "https://raw.githubusercontent.com/ara-rangers/vps/master/user-unlock"
+wget -O /usr/local/bin/auto-reboot "https://raw.githubusercontent.com/ara-rangers/vps/master/auto-reboot"
+wget -O /usr/local/bin/user-password "https://raw.githubusercontent.com/ara-rangers/vps/master/user-password"
+wget -O /usr/local/bin/trial "https://raw.githubusercontent.com/ara-rangers/vps/master/trial"
+wget -O /etc/pam.d/common-password "https://raw.githubusercontent.com/ara-rangers/vps/master/common-password"
+chmod +x /etc/pam.d/common-password
+chmod +x /usr/local/bin/menu
+chmod +x /usr/local/bin/m
+chmod +x /usr/local/bin/autokill 
+chmod +x /usr/local/bin/user-generate 
+chmod +x /usr/local/bin/speedtest 
+chmod +x /usr/local/bin/user-unlock
+chmod +x /usr/local/bin/user-lock
+chmod +x /usr/local/bin/auto-reboot
+chmod +x /usr/local/bin/user-password
+chmod +x /usr/local/bin/trial
+
+
 # zip
 cd
 cd /var/www/openvpn
