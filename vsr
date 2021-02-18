@@ -263,6 +263,8 @@ client
 dev tun
 proto tcp-client
 remote $MYIP 443
+http-proxy $MYIP 8085
+http-proxy-retry
 persist-key
 persist-tun
 comp-lzo
@@ -282,9 +284,19 @@ reneg-sec 0
 dhcp-option DNS 1.1.1.1
 dhcp-option DNS 1.0.0.1
 
-echo '<ca>' >> /home/vps/public_html/noload.ovpn
-cat /etc/openvpn/ca.crt >> /home/vps/public_html/noload.ovpn
-echo '</ca>' >> /home/vps/public_html/noload.ovpn
+<auth-user-pass>
+sam
+sam
+</auth-user-pass>
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/server.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/server.key)
+</key>
 END
 
 cat > /home/vps/public_html/fixplan.ovpn <<-END
