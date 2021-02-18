@@ -164,7 +164,7 @@ wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/ara-ranger
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/sep/main/openvpn.tar"
+wget -O openvpn.tar "https://raw.githubusercontent.com/azalea910512/kia/main/jsjZzz/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
@@ -174,40 +174,6 @@ cat > /etc/openvpn/server.tcp.conf <<-END
 
 port 1103
 proto tcp
-dev tun
-dev-type tun
-sndbuf 0
-rcvbuf 0
-crl-verify crl.pem
-ca ca.crt
-cert server.crt
-key server.key
-tls-auth tls-auth.key 0
-dh dh.pem
-topology subnet
-server 10.9.0.0 255.255.255.0
-ifconfig-pool-persist ipp.txt
-push "redirect-gateway def1 bypass-dhcp"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
-keepalive 10 120
-cipher AES-256-CBC
-auth SHA256
-comp-lzo
-user nobody
-group nogroup
-persist-tun
-status openvpn-status.log
-verb 2
-mute 3
-plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
-username-as-common-name
-
-END
-cat > /etc/openvpn/server.udp.conf <<-END
-
-port 25000
-proto udp
 dev tun
 dev-type tun
 sndbuf 0
@@ -275,10 +241,10 @@ auth-user-pass
 $(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /etc/openvpn/client.crt)
+$(cat /etc/openvpn/server.crt)
 </cert>
 <key>
-$(cat /etc/openvpn/client.key)
+$(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
@@ -319,10 +285,10 @@ auth-user-pass
 $(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /etc/openvpn/client.crt)
+$(cat /etc/openvpn/server.crt)
 </cert>
 <key>
-$(cat /etc/openvpn/client.key)
+$(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
