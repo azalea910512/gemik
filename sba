@@ -204,7 +204,6 @@ plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
 username-as-common-name
 
 END
-systemctl start openvpn@server.tcp
 cat > /etc/openvpn/server.udp.conf <<-END
 
 port 25000
@@ -239,19 +238,6 @@ plugin /etc/openvpn/openvpn-auth-pam.so /etc/pam.d/login
 username-as-common-name
 
 END
-systemctl start openvpn@server.udp
-sysctl -w net.ipv4.ip_forward=1
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
-iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
-iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
-iptables-save > /etc/iptables.up.rules
-wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/ara-rangers/vps/master/iptables"
-chmod +x /etc/network/if-up.d/iptables
-sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn@.service
-systemctl daemon-reload
-/etc/init.d/openvpn restart
-wget -qO /etc/openvpn/openvpn.bash "https://raw.githubusercontent.com/ara-rangers/vps/master/openvpn.bash"
-chmod +x /etc/openvpn/openvpn.bash
 
 mkdir -p /home/vps/public_html
 cat > /home/vps/public_html/tcp.ovpn <<EOF1
