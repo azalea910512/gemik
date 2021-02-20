@@ -234,6 +234,7 @@ $(cat /etc/openvpn/server.crt)
 <key>
 $(cat /etc/openvpn/server.key)
 </key>
+client
 }
 
 function stunconf () {
